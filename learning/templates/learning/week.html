@@ -1,0 +1,51 @@
+{% extends "learning/base.html" %}
+{% block title %}Tuần {{ week.number }}: {{ week.title }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="crumbs mb-2"><a href="{% url 'roadmap' %}">Lộ trình</a> › Tuần {{ week.number }}</div>
+<div class="card-x pad mb-4">
+  <div class="d-flex flex-wrap gap-2 mb-2"><span class="chip">{{ phase.name }}</span><span class="chip gray"><i class="bi bi-calendar3"></i> {{ week.start|date:"d/m" }} – {{ week.end|date:"d/m/Y" }}</span></div>
+  <h1 class="h3 fw-800 mb-1">Tuần {{ week.number }}: {{ week.title }}</h1>
+  <div class="muted en-text mb-2">{{ week.title_en }}</div>
+  <p class="mb-0"><b>Mục tiêu tuần:</b> {{ week.goal }}</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    {% for d in week.days %}
+    <a href="{% url 'day' d.number %}" class="card-x pad card-link mb-3 {% if d.date == today %}is-today{% endif %}" data-day-status="{{ d.number }}">
+      <div class="d-flex gap-3">
+        <span class="day-dot" style="width:40px;height:40px;font-size:.9rem">{{ d.number }}</span>
+        <div class="flex-grow-1">
+          <div class="small muted">{{ d.weekday }}, {{ d.date|date:"d/m" }}{% if d.date == today %} · <b style="color:var(--accent)">Hôm nay</b>{% endif %}</div>
+          <div class="fw-800">{{ d.title }} <span class="muted fw-normal small en-text">· {{ d.title_en }}</span></div>
+          <div class="small mt-1">{{ d.goal }}</div>
+          <div class="small muted mt-2"><i class="bi bi-box-seam"></i> Sản phẩm: {{ d.products|join:" · " }}</div>
+        </div>
+        <i class="bi bi-chevron-right muted align-self-center"></i>
+      </div>
+    </a>
+    {% endfor %}
+    <a href="{% url 'week_review' week.number %}" class="card-x pad card-link" style="border-style:dashed">
+      <div class="d-flex gap-3 align-items-center">
+        <span class="stat-icon amber"><i class="bi bi-cup-hot"></i></span>
+        <div><div class="fw-800">Chủ nhật {{ week.sunday|date:"d/m" }}: nghỉ hoặc ôn nhẹ 20 phút</div><div class="small muted">Lật lại từ vựng cả tuần, shadowing các câu khởi động, làm 20 câu ôn tập, nghe lại bản ghi âm.</div></div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-x pad week-assess mb-3" data-week="{{ week.number }}">
+      <h2 class="h6 fw-800 mb-1"><i class="bi bi-clipboard-data"></i> Tự đánh giá tuần {{ week.number }}</h2>
+      <p class="small muted">Điền cuối tuần. Đạt 4/5 trở lên ở cả hai thì chuyển tuần; chưa đạt thì ôn thêm 2–3 ngày.</p>
+      <div class="rubric-row"><span class="lbl">Điểm nói</span><span class="rate" data-field="speak">{% for i in "12345" %}<button type="button" data-v="{{ i }}">{{ i }}</button>{% endfor %}</span></div>
+      <div class="rubric-row"><span class="lbl">Điểm nghe</span><span class="rate" data-field="listen">{% for i in "12345" %}<button type="button" data-v="{{ i }}">{{ i }}</button>{% endfor %}</span></div>
+      <textarea class="form-control mt-2" rows="3" placeholder="Ghi chú: điều làm tốt, điều cần cải thiện…"></textarea>
+    </div>
+    <div class="d-flex gap-2">
+      {% if prev_week %}<a class="btn btn-ghost flex-fill" href="{% url 'week' prev_week.number %}"><i class="bi bi-chevron-left"></i> Tuần {{ prev_week.number }}</a>{% endif %}
+      {% if next_week %}<a class="btn btn-ghost flex-fill" href="{% url 'week' next_week.number %}">Tuần {{ next_week.number }} <i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% load learning_tags %}<div class="vocab-grid">
+{% for w in words %}
+  <div class="vcard" data-word="{{ w.word }}" data-ex="{{ w.ex }}" data-search="{{ w.word|lower }} {{ w.vi|lower }}">
+    <div class="d-flex align-items-start gap-2">
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 flex-wrap"><span class="word en-text">{{ w.word }}</span><span class="pos">{{ w.pos }}</span>{% if show_day %}<a class="chip gray text-decoration-none" href="{% url 'day' w.day %}">Ngày {{ w.day }}</a>{% endif %}<span class="chip ok known hidden"><i class="bi bi-check2"></i> Đã thuộc</span></div>
+        <div class="ipa">{{ w.ipa }}</div>
+      </div>
+      {% say w.word %}{% say w.word 'slow' %}
+    </div>
+    <div class="mean">{{ w.vi }}</div>
+    <div class="ex">{% say w.ex %}<span class="en-text">{{ w.ex }}</span></div>
+    <div class="ex-vi">{{ w.ex_vi }}</div>
+  </div>
+{% endfor %}
+</div>

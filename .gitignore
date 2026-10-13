@@ -1,11 +1,17 @@
-
 # Python
 venv/
 __pycache__/
 *.pyc
 
-# Database
-db.sqlite3
+# Secrets
+.env
 
 # Static collected
 staticfiles/
+
+# Cache file âm thanh tạo bởi edge-tts
+.tts_cache/
+
+# Database cũ (không còn dùng)
+db.sqlite3
+data.json

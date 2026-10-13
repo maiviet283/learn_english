@@ -1,0 +1,20 @@
+{% extends "learning/base.html" %}
+{% load learning_tags %}
+{% block title %}Mẫu câu giao tiếp · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<h1 class="h3 fw-800 mb-1">Mẫu câu giao tiếp</h1>
+<p class="muted mb-4">Tất cả mẫu câu hữu ích trong lộ trình — từ giới thiệu bản thân, standup, code review đến phỏng vấn và thuyết trình. Bấm <i class="bi bi-volume-up"></i> để nghe, <i class="bi bi-hourglass-split"></i> để nghe chậm.</p>
+<div class="row g-3">
+{% for d, items in groups %}
+  <div class="col-lg-6">
+    <div class="card-x pad h-100">
+      <div class="d-flex align-items-center gap-2 mb-2"><span class="chip">Ngày {{ d.number }}</span><a class="fw-800 text-decoration-none" href="{% url 'day' d.number %}">{{ d.title }}</a></div>
+      {% for p in items %}
+      <div class="phrase">{% say p.en %}{% say p.en 'slow' %}<div><div class="en en-text">{{ p.en }}</div><div class="vi">{{ p.vi }}</div></div></div>
+      {% endfor %}
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

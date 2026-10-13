@@ -4,31 +4,16 @@ from . import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-
-    # Grammar
-    path('grammar/', views.grammar_list, name='grammar_list'),
-    path('grammar/<int:pk>/', views.grammar_detail, name='grammar_detail'),
-    path('grammar/<int:pk>/quiz/', views.grammar_quiz, name='grammar_quiz'),
-
-    # Vocabulary
-    path('vocab/', views.vocab_topics, name='vocab_topics'),
-    path('vocab/<int:pk>/', views.vocab_detail, name='vocab_detail'),
-    path('vocab/<int:pk>/flashcards/', views.flashcards, name='flashcards'),
-    path('vocab/<int:pk>/quiz/', views.vocab_quiz, name='vocab_quiz'),
-
-    # Reading
-    path('reading/', views.reading_list, name='reading_list'),
-    path('reading/<int:pk>/', views.reading_detail, name='reading_detail'),
-
-    # Listening
-    path('listening/', views.listening_list, name='listening_list'),
-    path('listening/<int:pk>/', views.listening_detail, name='listening_detail'),
-
-    # Writing & Speaking
-    path('writing/', views.writing, name='writing'),
-    path('speaking/', views.speaking, name='speaking'),
-
-    # Mock test
-    path('mock-test/', views.mock_test_start, name='mock_test_start'),
-    path('mock-test/run/', views.mock_test, name='mock_test'),
+    path('hom-nay/', views.today, name='today'),
+    path('lo-trinh/', views.roadmap, name='roadmap'),
+    path('tuan/<int:number>/', views.week_detail, name='week'),
+    path('tuan/<int:number>/on-tap/', views.week_review, name='week_review'),
+    path('ngay/<int:number>/', views.day_detail, name='day'),
+    path('ngay/<int:number>/luyen-tu/', views.day_practice, name='day_practice'),
+    path('on-tap/', views.review, name='review'),
+    path('tu-vung/', views.vocab_bank, name='vocab_bank'),
+    path('mau-cau/', views.phrase_bank, name='phrases'),
+    path('ghi-am/', views.recordings, name='recordings'),
+    path('cai-dat/', views.settings_page, name='settings'),
+    path('tts/', views.tts_audio, name='tts'),
 ]

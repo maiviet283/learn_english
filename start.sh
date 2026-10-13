@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -o errexit
 
-python manage.py collectstatic --noinput
-python manage.py migrate --noinput
-python manage.py loaddata data.json
-python manage.py shell -c "from django.contrib.sites.models import Site; Site.objects.update_or_create(id=1, defaults={'domain': 'vstep.vietdon.vn', 'name': 'VSTEP Master'})"
-exec gunicorn vstep.wsgi:application
+# Web không dùng database nên không cần migrate/loaddata.
+# gthread: mỗi worker có nhiều luồng để vừa phục vụ trang vừa tạo âm thanh (edge-tts) song song.
+exec gunicorn english.wsgi:application --workers 2 --threads 8 --timeout 60

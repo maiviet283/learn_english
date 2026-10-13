@@ -1,0 +1,52 @@
+{% extends "learning/base.html" %}
+{% block title %}Lộ trình 12 tuần · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-end gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-800 mb-1">Lộ trình 12 tuần</h1>
+    <p class="muted mb-0">72 ngày học, mỗi ngày 90 phút, Chủ nhật nghỉ hoặc ôn nhẹ. Làm theo đúng thứ tự, không nhảy tuần.</p>
+  </div>
+  <a href="{% url 'today' %}" class="btn btn-brand ms-auto"><i class="bi bi-sun"></i> Bài hôm nay</a>
+</div>
+
+<div class="card-x pad mb-4 small">
+  <div class="row g-3">
+    <div class="col-md-4"><b><i class="bi bi-info-circle"></i> Trượt một ngày?</b><br><span class="muted">Không học bù gấp đôi. Chuyển sang ngày kế tiếp và đưa phần còn lại vào Chủ nhật.</span></div>
+    <div class="col-md-4"><b><i class="bi bi-mic"></i> Ghi âm là quan trọng nhất</b><br><span class="muted">Không ghi âm thì không biết mình có tiến bộ hay không.</span></div>
+    <div class="col-md-4"><b><i class="bi bi-clipboard-check"></i> Qua tuần mới khi…</b><br><span class="muted">tự chấm nói và nghe đạt 4/5 trở lên. Chưa đạt thì ôn thêm 2–3 ngày.</span></div>
+  </div>
+</div>
+
+{% for n, info, weeks in phases %}
+<section class="mb-5">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <span class="sec-num">{{ n }}</span>
+    <div><h2 class="h5 fw-800 mb-0">{{ info.name }}</h2><div class="small muted">{{ info.focus }} <b>Đích đến:</b> {{ info.target }}</div></div>
+  </div>
+  <div class="row g-3">
+    {% for w in weeks %}
+    <div class="col-md-6 col-xl-3">
+      <div class="card-x pad h-100 d-flex flex-column">
+        <div class="d-flex align-items-center mb-1">
+          <span class="week-num">Tuần {{ w.number }}</span>
+          <span class="chip gray ms-auto tabular" data-week-done="{% for d in w.days %}{{ d.number }}{% if not forloop.last %},{% endif %}{% endfor %}">0/6</span>
+        </div>
+        <div class="small muted mb-1">{{ w.start|date:"d/m" }} – {{ w.end|date:"d/m/Y" }}</div>
+        <a href="{% url 'week' w.number %}" class="fw-800 text-decoration-none mb-1" style="color:var(--ink)">{{ w.title }}</a>
+        <div class="small muted mb-2">{{ w.goal }}</div>
+        <div class="mt-auto">
+          {% for d in w.days %}
+          <a class="day-row py-1 {% if d.date == today %}is-today{% endif %}" href="{% url 'day' d.number %}" data-day-status="{{ d.number }}">
+            <span class="day-dot">{{ d.number }}</span><span class="small">{{ d.title }}</span>
+          </a>
+          {% endfor %}
+          <a class="day-row py-1" href="{% url 'week_review' w.number %}"><span class="day-dot"><i class="bi bi-cup-hot"></i></span><span class="small muted">Chủ nhật: ôn tập</span></a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

@@ -1,99 +1,93 @@
-{% extends 'learning/base.html' %}
+{% extends "learning/base.html" %}
+
 {% block content %}
 <section class="hero p-4 p-md-5 mb-4">
-  <div class="row align-items-center">
-    <div class="col-lg-8">
-      <p class="small fw-semibold mb-2 opacity-75" style="letter-spacing:.5px">MIỄN PHÍ · KHÔNG CẦN ĐĂNG KÝ</p>
-      <h1 class="fw-bold mb-2" style="font-size:clamp(1.6rem,4vw,2.4rem)">Chinh phục VSTEP B1 · B2</h1>
-      <p class="mb-3 opacity-85">Lộ trình bài bản theo giáo trình <strong>Destination B1/B2</strong>: ngữ pháp giải thích bằng tiếng Việt, từ vựng có phiên âm &amp; ví dụ song ngữ, luyện 4 kỹ năng và thi thử — <strong>làm sai có giải thích chi tiết</strong>.</p>
-      <div class="d-flex gap-2 flex-wrap">
-        <a href="{% url 'grammar_list' %}" class="btn btn-light fw-semibold text-dark"><i class="bi bi-play-fill"></i> Bắt đầu học</a>
-        <a href="{% url 'mock_test_start' %}" class="btn btn-outline-light fw-semibold">Thi thử ngay</a>
-      </div>
-    </div>
-    <div class="col-lg-4 d-none d-lg-block text-end" style="font-size:5rem;opacity:.15;line-height:1">
-      <div>B1</div><div style="font-size:3.5rem">B2</div>
-    </div>
+  <div class="position-relative" style="z-index:1">
+    {% if status == 'before' %}
+      <div class="muted-light fw-600 mb-2"><i class="bi bi-hourglass-split"></i> Lộ trình bắt đầu {{ day.weekday }}, {{ day.date|date:"d/m/Y" }} — còn {{ days_until_start }} ngày</div>
+      <h1 class="fw-800 mb-2">Sẵn sàng cho 12 tuần nói tiếng Anh tự tin</h1>
+      <p class="muted-light mb-4" style="max-width:640px">Mỗi ngày 90 phút: shadowing, từ vựng có âm thanh, nghe, nói, đọc, viết. Bạn có thể bắt đầu xem trước Ngày 1 ngay bây giờ.</p>
+      <a href="{% url 'day' 1 %}" class="btn btn-light btn-lg"><i class="bi bi-play-fill"></i> Xem Ngày 1: {{ day.title }}</a>
+    {% elif status == 'sunday' %}
+      <div class="muted-light fw-600 mb-2"><i class="bi bi-cup-hot"></i> Chủ nhật, {{ today|date:"d/m/Y" }} · Tuần {{ week.number }}</div>
+      <h1 class="fw-800 mb-2">Hôm nay nghỉ hoặc ôn nhẹ 20 phút</h1>
+      <p class="muted-light mb-4">Nghe lại bản ghi âm trong tuần, lật thẻ từ vựng, làm bài ôn tập. Không học thêm từ mới.</p>
+      <a href="{% url 'week_review' week.number %}" class="btn btn-light btn-lg"><i class="bi bi-arrow-repeat"></i> Ôn tập tuần {{ week.number }}</a>
+    {% elif status == 'after' %}
+      <div class="muted-light fw-600 mb-2"><i class="bi bi-trophy"></i> Đã qua 12 tuần</div>
+      <h1 class="fw-800 mb-2">Bạn đã đi hết lộ trình!</h1>
+      <p class="muted-light mb-4">Duy trì ít nhất 3 buổi mỗi tuần để không mất đà. Ôn từ vựng mỗi ngày và học lại những ngày còn yếu.</p>
+      <a href="{% url 'review' %}" class="btn btn-light btn-lg"><i class="bi bi-stack"></i> Ôn từ vựng</a>
+    {% else %}
+      <div class="muted-light fw-600 mb-2"><i class="bi bi-calendar-check"></i> {{ day.weekday }}, {{ today|date:"d/m/Y" }} · Tuần {{ week.number }} · Ngày {{ day.number }}/{{ total_days }}</div>
+      <h1 class="fw-800 mb-1">{{ day.title }}</h1>
+      <div class="muted-light mb-3 en-text">{{ day.title_en }}</div>
+      <p class="muted-light mb-4" style="max-width:680px">{{ day.goal }}</p>
+      <a href="{% url 'day' day.number %}" class="btn btn-light btn-lg"><i class="bi bi-play-fill"></i> Vào học hôm nay</a>
+    {% endif %}
+    <a id="continue-link" href="#" class="btn btn-outline-light btn-lg ms-sm-2 mt-2 mt-sm-0 hidden"><i class="bi bi-skip-forward"></i> Học tiếp: Ngày <span class="n"></span></a>
   </div>
 </section>
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
-    <div class="card p-3 h-100"><div class="d-flex align-items-center gap-3">
-      <div class="stat-icon" style="background:var(--primary-light);color:var(--primary)"><i class="bi bi-journal-text"></i></div>
-      <div><div class="fs-4 fw-bold">{{ stats.units }}</div><div class="small text-secondary">Unit ngữ pháp</div></div>
-    </div></div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card p-3 h-100"><div class="d-flex align-items-center gap-3">
-      <div class="stat-icon" style="background:#dcfce7;color:var(--success)"><i class="bi bi-card-text"></i></div>
-      <div><div class="fs-4 fw-bold">{{ stats.words }}</div><div class="small text-secondary">Từ vựng</div></div>
-    </div></div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card p-3 h-100"><div class="d-flex align-items-center gap-3">
-      <div class="stat-icon" style="background:var(--accent-light);color:var(--accent)"><i class="bi bi-pencil-square"></i></div>
-      <div><div class="fs-4 fw-bold">{{ stats.questions }}</div><div class="small text-secondary">Câu hỏi luyện tập</div></div>
-    </div></div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card p-3 h-100"><div class="d-flex align-items-center gap-3">
-      <div class="stat-icon" style="background:#fce7f3;color:#be185d"><i class="bi bi-headphones"></i></div>
-      <div><div class="fs-4 fw-bold">{{ stats.passages }}</div><div class="small text-secondary">Bài đọc &amp; nghe</div></div>
-    </div></div>
-  </div>
+<div id="home-stats" data-total="{{ total_days }}" class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="card-x pad stat"><div class="stat-icon"><i class="bi bi-check2-circle"></i></div><div><div class="stat-value" id="stat-done">0</div><div class="stat-label">Ngày đã hoàn thành</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card-x pad stat"><div class="stat-icon amber"><i class="bi bi-fire"></i></div><div><div class="stat-value" id="stat-streak">0</div><div class="stat-label">Ngày học liên tiếp</div></div></div></div>
+  <div class="col-6 col-lg-3"><a href="{% url 'review' %}" class="card-x pad stat card-link"><div class="stat-icon"><i class="bi bi-collection"></i></div><div><div class="stat-value" id="stat-words">0</div><div class="stat-label">Từ trong lịch ôn</div></div></a></div>
+  <div class="col-6 col-lg-3"><a href="{% url 'review' %}" class="card-x pad stat card-link"><div class="stat-icon amber"><i class="bi bi-alarm"></i></div><div><div class="stat-value" id="stat-due">0</div><div class="stat-label">Thẻ cần ôn hôm nay</div></div></a></div>
+  <div class="col-12"><div class="progress-thin"><span id="overall-progress"></span></div></div>
 </div>
 
-<h2 class="h5 fw-bold mb-3">Lộ trình học</h2>
-<div class="row g-3 mb-4">
-  <div class="col-md-4"><a href="{% url 'grammar_list' %}" class="text-decoration-none"><div class="card card-hover p-3 h-100">
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <span class="badge rounded-pill" style="background:var(--primary-light);color:var(--primary)">1</span>
-      <h3 class="h6 fw-bold text-dark mb-0">Ngữ pháp</h3>
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card-x pad h-100">
+      <div class="d-flex align-items-center mb-1">
+        <div class="week-num">Tuần {{ week.number }} · {{ week.start|date:"d/m" }} – {{ week.end|date:"d/m" }}</div>
+        <a class="ms-auto small" href="{% url 'week' week.number %}">Chi tiết tuần <i class="bi bi-chevron-right"></i></a>
+      </div>
+      <h2 class="h5 fw-800 mb-1">{{ week.title }}</h2>
+      <p class="muted small mb-3">{{ week.goal }}</p>
+      <div class="week-strip mb-3">
+        {% for d in week.days %}
+        <a href="{% url 'day' d.number %}" data-day-status="{{ d.number }}" class="{% if d.date == today %}is-today{% endif %}" title="{{ d.title }}"><span class="wd">{{ d.weekday|slice:"4:" }}</span>{{ d.number }}</a>
+        {% endfor %}
+        <a href="{% url 'week_review' week.number %}" class="sun" title="Chủ nhật: ôn tập"><span class="wd">CN</span><i class="bi bi-cup-hot"></i></a>
+      </div>
+      {% for d in week.days %}
+      <a class="day-row {% if d.date == today %}is-today{% endif %}" href="{% url 'day' d.number %}" data-day-status="{{ d.number }}">
+        <span class="day-dot">{{ d.number }}</span>
+        <span class="date">{{ d.weekday }}<br>{{ d.date|date:"d/m" }}</span>
+        <span class="flex-grow-1"><span class="fw-600">{{ d.title }}</span><br><span class="small muted en-text">{{ d.title_en }}</span></span>
+        <i class="bi bi-chevron-right muted"></i>
+      </a>
+      {% endfor %}
     </div>
-    <p class="small text-secondary mb-0">Học lý thuyết từng unit bằng tiếng Việt, có bảng công thức, ví dụ dịch song ngữ — rồi làm bài tập củng cố.</p>
-  </div></a></div>
-  <div class="col-md-4"><a href="{% url 'vocab_topics' %}" class="text-decoration-none"><div class="card card-hover p-3 h-100">
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <span class="badge rounded-pill" style="background:#dcfce7;color:var(--success)">2</span>
-      <h3 class="h6 fw-bold text-dark mb-0">Từ vựng theo chủ đề</h3>
-    </div>
-    <p class="small text-secondary mb-0">Phiên âm IPA, nghĩa tiếng Việt, ví dụ song ngữ. Học bằng flashcard &amp; kiểm tra trắc nghiệm.</p>
-  </div></a></div>
-  <div class="col-md-4"><a href="{% url 'reading_list' %}" class="text-decoration-none"><div class="card card-hover p-3 h-100">
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <span class="badge rounded-pill" style="background:var(--accent-light);color:var(--accent)">3</span>
-      <h3 class="h6 fw-bold text-dark mb-0">Đọc hiểu</h3>
-    </div>
-    <p class="small text-secondary mb-0">Bài đọc theo format VSTEP kèm bản dịch tham khảo. Trả lời câu hỏi, xem giải thích đáp án.</p>
-  </div></a></div>
-  <div class="col-md-4"><a href="{% url 'listening_list' %}" class="text-decoration-none"><div class="card card-hover p-3 h-100">
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <span class="badge rounded-pill" style="background:#fce7f3;color:#be185d">4</span>
-      <h3 class="h6 fw-bold text-dark mb-0">Nghe hiểu</h3>
-    </div>
-    <p class="small text-secondary mb-0">Nghe bài hội thoại/độc thoại, làm câu hỏi, xem transcript và bản dịch.</p>
-  </div></a></div>
-  <div class="col-md-4"><a href="{% url 'writing' %}" class="text-decoration-none"><div class="card card-hover p-3 h-100">
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <span class="badge rounded-pill" style="background:#ede9fe;color:#7c3aed">5</span>
-      <h3 class="h6 fw-bold text-dark mb-0">Viết (Task 1 &amp; 2)</h3>
-    </div>
-    <p class="small text-secondary mb-0">Cấu trúc bài thi viết VSTEP, khung bài mẫu, câu mở/kết, bài mẫu band cao kèm phân tích.</p>
-  </div></a></div>
-  <div class="col-md-4"><a href="{% url 'speaking' %}" class="text-decoration-none"><div class="card card-hover p-3 h-100">
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <span class="badge rounded-pill" style="background:#fef3c7;color:#92400e">6</span>
-      <h3 class="h6 fw-bold text-dark mb-0">Nói (Part 1–3)</h3>
-    </div>
-    <p class="small text-secondary mb-0">Chiến lược trả lời từng phần, mẫu câu ăn điểm, bài nói mẫu có dịch để luyện theo.</p>
-  </div></a></div>
-</div>
+  </div>
 
-<div class="card card-hover p-4 text-center" style="border-color: var(--primary); border-style: dashed;">
-  <div class="fs-3 mb-1" style="color:var(--primary)"><i class="bi bi-stopwatch"></i></div>
-  <h3 class="h5 fw-bold mb-1">Thi thử tổng hợp</h3>
-  <p class="small text-secondary mb-3">Đề thi rút gọn mô phỏng VSTEP với đồng hồ đếm ngược — mỗi lần một đề khác nhau, có giải thích chi tiết.</p>
-  <a href="{% url 'mock_test_start' %}" class="btn btn-brand">Vào thi thử</a>
+  <div class="col-lg-5">
+    <div class="card-x pad mb-4">
+      <h2 class="h6 fw-800 mb-3"><i class="bi bi-clock-history"></i> Thời khóa biểu 90 phút mỗi ngày</h2>
+      <table class="table table-sm align-middle mb-2" style="--bs-table-bg:transparent">
+        <tbody>
+          <tr><td><span class="chip">15'</span></td><td><b>Shadowing</b><br><span class="small muted">Nghe câu ngắn, nói theo ngay, bắt chước ngữ điệu</span></td></tr>
+          <tr><td><span class="chip">20'</span></td><td><b>Từ vựng</b><br><span class="small muted">15–20 thẻ mới + ôn thẻ cũ theo lịch</span></td></tr>
+          <tr><td><span class="chip">25'</span></td><td><b>Nghe</b><br><span class="small muted">Lần đầu không nhìn lời, rồi mới đọc lời thoại</span></td></tr>
+          <tr><td><span class="chip">20'</span></td><td><b>Nói</b><br><span class="small muted">Ghi âm 1–2 phút rồi tự nghe lại</span></td></tr>
+          <tr><td><span class="chip">10'</span></td><td><b>Viết</b><br><span class="small muted">5–7 câu, email, tin nhắn, commit message</span></td></tr>
+        </tbody>
+      </table>
+      <div class="small muted">Tỷ lệ: 40% nói · 30% nghe · 20% đọc & viết · 10% từ vựng & ngữ pháp. Chủ nhật nghỉ hoặc ôn nhẹ 20 phút.</div>
+    </div>
+
+    <div class="card-x pad">
+      <h2 class="h6 fw-800 mb-3"><i class="bi bi-signpost-split"></i> Ba chặng của lộ trình</h2>
+      {% for n, p in phases.items %}
+      <div class="d-flex gap-3 mb-3">
+        <span class="stat-icon {% if n == week.phase %}amber{% endif %}" style="width:36px;height:36px;font-size:1rem">{{ n }}</span>
+        <div><div class="fw-700">{{ p.name }}</div><div class="small muted">{{ p.focus }}</div><div class="small"><i class="bi bi-bullseye"></i> {{ p.target }}</div></div>
+      </div>
+      {% endfor %}
+      <a href="{% url 'roadmap' %}" class="btn btn-soft btn-sm">Xem toàn bộ lộ trình</a>
+    </div>
+  </div>
 </div>
 {% endblock %}

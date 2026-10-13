@@ -1,18 +1,24 @@
 services:
   - type: web
-    name: vstep-master
+    name: learn-english
     runtime: python
     plan: free
     buildCommand: "./build.sh"
     startCommand: "./start.sh"
+    domains:
+      - english.vietdon.vn
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.9"
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
         value: "False"
-      - key: PYTHON_VERSION
-        value: "3.12.9"
       - key: ALLOWED_HOSTS
-        value: "learn-vstep.onrender.com,vstep.vietdon.vn"
+        value: ".onrender.com,english.vietdon.vn"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://learn-vstep.onrender.com,https://vstep.vietdon.vn"
+        value: "https://english.vietdon.vn"
+      - key: SITE_URL
+        value: "https://english.vietdon.vn"
+      - key: COURSE_START_DATE
+        value: "2026-10-19"

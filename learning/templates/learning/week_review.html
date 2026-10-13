@@ -1,0 +1,41 @@
+{% extends "learning/base.html" %}
+{% block title %}Ôn tập tuần {{ week.number }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="crumbs mb-2"><a href="{% url 'roadmap' %}">Lộ trình</a> › <a href="{% url 'week' week.number %}">Tuần {{ week.number }}</a> › Chủ nhật</div>
+<div class="card-x pad mb-4">
+  <span class="chip amber mb-2"><i class="bi bi-cup-hot"></i> Chủ nhật {{ week.sunday|date:"d/m/Y" }} · 20 phút</span>
+  <h1 class="h3 fw-800 mb-1">Ôn tập tuần {{ week.number }}: {{ week.title }}</h1>
+  <p class="muted mb-0">Nghỉ ngơi cũng là một phần của việc học. Hôm nay chỉ ôn nhẹ, <b>không học thêm từ mới</b>. Chọn 2–3 việc dưới đây.</p>
+</div>
+
+<section class="mb-4">
+  <h2 class="h5 fw-800 mb-3"><i class="bi bi-mic"></i> 1. Nghe lại bản ghi âm trong tuần</h2>
+  <div class="card-x pad">
+    <p class="small muted mb-2">So sánh bản ghi đầu tuần và cuối tuần: bạn trôi chảy hơn chưa? Âm cuối đã rõ hơn chưa?</p>
+    <a href="{% url 'recordings' %}" class="btn btn-soft btn-sm"><i class="bi bi-collection-play"></i> Mở thư viện bản ghi</a>
+  </div>
+</section>
+
+<section class="mb-4">
+  <h2 class="h5 fw-800 mb-3"><i class="bi bi-card-heading"></i> 2. Ôn {{ vocab_json|length }} từ vựng của tuần</h2>
+  {% include "learning/partials/_practice.html" %}
+</section>
+
+<section class="mb-4">
+  <h2 class="h5 fw-800 mb-3"><i class="bi bi-soundwave"></i> 3. Shadowing lại các câu khởi động</h2>
+  <div class="card-x pad">{% include "learning/partials/_shadow.html" with items=sentences %}</div>
+</section>
+
+<section class="mb-4">
+  <h2 class="h5 fw-800 mb-3"><i class="bi bi-ui-checks"></i> 4. {{ questions|length }} câu ôn tập ngẫu nhiên</h2>
+  <div class="card-x pad">{% include "learning/partials/_quiz.html" with questions=questions key=quiz_key %}</div>
+</section>
+
+<div class="d-flex gap-2">
+  <a class="btn btn-ghost" href="{% url 'week' week.number %}"><i class="bi bi-arrow-left"></i> Tuần {{ week.number }}</a>
+  {% if next_week %}<a class="btn btn-brand ms-auto" href="{% url 'day' next_week.days.0.number %}">Bắt đầu tuần {{ next_week.number }} <i class="bi bi-arrow-right"></i></a>{% endif %}
+</div>
+{% endblock %}
+
+{% block data %}{{ vocab_json|json_script:"vocab-data" }}{{ vocab_json|json_script:"pool-data" }}{% endblock %}

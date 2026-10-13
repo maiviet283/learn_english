@@ -1,0 +1,30 @@
+{% extends "learning/base.html" %}
+{% block title %}Bản ghi âm của tôi · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div id="recordings">
+  <h1 class="h3 fw-800 mb-1">Bản ghi âm của tôi</h1>
+  <p class="muted mb-4">Mọi bản ghi được lưu ngay trong trình duyệt này (không tải lên máy chủ). Nghe lại bản tuần 1 và tuần 12 để thấy mình tiến bộ thế nào. Muốn giữ lâu dài, hãy bấm <i class="bi bi-download"></i> để tải về.</p>
+
+  <div id="cmp-wrap" class="card-x pad mb-4 hidden">
+    <h2 class="h6 fw-800 mb-2"><i class="bi bi-arrow-left-right"></i> So sánh 2 bản ghi</h2>
+    <div class="row g-2 align-items-center">
+      <div class="col-md-5"><select id="cmp-a" class="form-select form-select-sm"></select></div>
+      <div class="col-md-5"><select id="cmp-b" class="form-select form-select-sm"></select></div>
+      <div class="col-md-2"><button id="cmp-play" type="button" class="btn btn-brand btn-sm w-100"><i class="bi bi-play-fill"></i> Phát lần lượt</button></div>
+    </div>
+  </div>
+
+  <div class="card-x pad mb-4">
+    <h2 class="h6 fw-800 mb-2"><i class="bi bi-clipboard-check"></i> Lịch sử tự chấm 4 tiêu chí</h2>
+    <div class="table-responsive"><table class="table table-sm mb-0" style="--bs-table-bg:transparent">
+      <thead><tr><th>Bài</th><th>Trôi chảy</th><th>Từ vựng</th><th>Ngữ pháp</th><th>Phát âm</th><th>Lúc</th></tr></thead>
+      <tbody id="rubric-history"></tbody>
+    </table></div>
+  </div>
+
+  <div id="rec-list"></div>
+</div>
+{% endblock %}
+
+{% block data %}{{ day_titles|json_script:"day-titles" }}{% endblock %}

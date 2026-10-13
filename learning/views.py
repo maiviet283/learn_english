@@ -1,263 +1,156 @@
-import random
+from django.conf import settings
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
+from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_GET
 
-from django.db.models import Count
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.csrf import ensure_csrf_cookie
+from . import content, tts
 
-from .models import (ListeningTrack, Question, ReadingPassage,
-                     SpeakingLesson, Unit, VocabTopic, VocabWord,
-                     WritingLesson)
+
+def _vocab_json(words):
+    return [{'word': w['word'], 'ipa': w['ipa'], 'pos': w['pos'], 'vi': w['vi'],
+             'ex': w['ex'], 'ex_vi': w['ex_vi'], 'day': w.get('day')} for w in words]
 
 
 def home(request):
-    stats = {
-        'units': Unit.objects.count(),
-        'words': VocabWord.objects.count(),
-        'questions': Question.objects.count(),
-        'passages': ReadingPassage.objects.count() + ListeningTrack.objects.count(),
-    }
-    return render(request, 'learning/home.html', {'stats': stats})
-
-
-# ---------- Cham diem chung ----------
-
-def _grade(request, questions):
-    results, score = [], 0
-    for q in questions:
-        chosen = request.POST.get(f'q{q.id}', '')
-        ok = chosen == q.correct
-        if ok:
-            score += 1
-        results.append({
-            'q': q, 'chosen': chosen,
-            'chosen_text': dict(q.options()).get(chosen, '(chưa chọn)'),
-            'ok': ok,
-        })
-    return results, score
-
-
-def _pct(score, total):
-    return round(score * 100 / total) if total else 0
-
-
-# ---------- Ngu phap ----------
-
-def grammar_list(request):
-    units = Unit.objects.annotate(n_questions=Count('questions'))
-    return render(request, 'learning/grammar_list.html', {'units': units})
-
-
-def grammar_detail(request, pk):
-    unit = get_object_or_404(Unit.objects.select_related('lesson'), pk=pk)
-    prev_unit = Unit.objects.filter(order__lt=unit.order).last()
-    next_unit = Unit.objects.filter(order__gt=unit.order).first()
-    return render(request, 'learning/grammar_detail.html', {
-        'unit': unit, 'prev_unit': prev_unit, 'next_unit': next_unit,
+    today = timezone.localdate()
+    day, status = content.scheduled_day(today)
+    week = content.get_week(day['week'])
+    return render(request, 'learning/home.html', {
+        'today': today,
+        'days_until_start': (settings.COURSE_START_DATE - today).days,
+        'total_days': content.total_days(),
+        'day': day,
+        'status': status,
+        'week': week,
+        'weeks': content.all_weeks(),
+        'phases': content.PHASES,
     })
 
 
-def grammar_quiz(request, pk):
-    unit = get_object_or_404(Unit, pk=pk)
-    if request.method == 'POST':
-        ids = request.POST.getlist('qid')
-        questions = list(Question.objects.filter(id__in=ids, unit=unit))
-        questions.sort(key=lambda q: ids.index(str(q.id)))
-        results, score = _grade(request, questions)
-        return render(request, 'learning/quiz_result.html', {
-            'title': f'Kết quả – Unit {unit.order}: {unit.title}',
-            'results': results, 'score': score, 'total': len(questions),
-            'percent': _pct(score, len(questions)),
-            'back_url': 'grammar_detail', 'back_pk': unit.pk,
-        })
-    questions = unit.questions.all()
-    return render(request, 'learning/quiz.html', {
-        'title': f'Luyện tập – Unit {unit.order}: {unit.title}',
-        'subtitle': unit.title_vi,
-        'questions': questions,
+def roadmap(request):
+    weeks = content.all_weeks()
+    phases = [(n, info, [w for w in weeks if w['phase'] == n]) for n, info in content.PHASES.items()]
+    return render(request, 'learning/roadmap.html', {
+        'phases': phases,
+        'today': timezone.localdate(),
     })
 
 
-# ---------- Tu vung ----------
-
-def vocab_topics(request):
-    topics = VocabTopic.objects.annotate(n_words=Count('words'))
-    return render(request, 'learning/vocab_topics.html', {'topics': topics})
-
-
-@ensure_csrf_cookie
-def vocab_detail(request, pk):
-    topic = get_object_or_404(VocabTopic, pk=pk)
-    words = topic.words.all()
-    return render(request, 'learning/vocab_detail.html', {
-        'topic': topic, 'words': words,
+def week_detail(request, number):
+    week = content.get_week(number)
+    if not week:
+        raise Http404
+    return render(request, 'learning/week.html', {
+        'week': week,
+        'phase': content.PHASES[week['phase']],
+        'prev_week': content.get_week(number - 1),
+        'next_week': content.get_week(number + 1),
+        'today': timezone.localdate(),
     })
 
 
-def flashcards(request, pk):
-    topic = get_object_or_404(VocabTopic, pk=pk)
-    words = list(topic.words.all())
-    random.shuffle(words)
-    return render(request, 'learning/flashcards.html', {'topic': topic, 'words': words})
-
-
-def _vocab_mcq(topic, words, n=10):
-    pool = list(words)
-    random.shuffle(pool)
-    quiz = []
-    all_meanings = [w.meaning_vi for w in words]
-    for w in pool[:n]:
-        distractors = random.sample([m for m in all_meanings if m != w.meaning_vi],
-                                    k=min(3, len(all_meanings) - 1))
-        opts = distractors + [w.meaning_vi]
-        random.shuffle(opts)
-        quiz.append({'word': w, 'options': opts})
-    return quiz
-
-
-def vocab_quiz(request, pk):
-    topic = get_object_or_404(VocabTopic, pk=pk)
-    words = list(topic.words.all())
-    if request.method == 'POST':
-        ids = request.POST.getlist('wid')
-        results, score = [], 0
-        for wid in ids:
-            w = next((x for x in words if str(x.id) == wid), None)
-            if not w:
-                continue
-            chosen = request.POST.get(f'w{wid}', '(chưa chọn)')
-            ok = chosen == w.meaning_vi
-            if ok:
-                score += 1
-            results.append({'word': w, 'chosen': chosen, 'ok': ok})
-        return render(request, 'learning/vocab_quiz_result.html', {
-            'topic': topic, 'results': results, 'score': score, 'total': len(results),
-            'percent': _pct(score, len(results)),
-        })
-    if len(words) < 4:
-        return redirect('vocab_detail', pk=pk)
-    quiz = _vocab_mcq(topic, words)
-    return render(request, 'learning/vocab_quiz.html', {'topic': topic, 'quiz': quiz})
-
-
-# ---------- Doc hieu ----------
-
-def reading_list(request):
-    passages = ReadingPassage.objects.annotate(n_questions=Count('questions'))
-    return render(request, 'learning/reading_list.html', {'passages': passages})
-
-
-def reading_detail(request, pk):
-    passage = get_object_or_404(ReadingPassage, pk=pk)
-    questions = passage.questions.all()
-    if request.method == 'POST':
-        results, score = _grade(request, questions)
-        return render(request, 'learning/reading_detail.html', {
-            'passage': passage, 'questions': questions,
-            'results': results, 'score': score, 'total': len(questions),
-            'percent': _pct(score, len(questions)),
-        })
-    return render(request, 'learning/reading_detail.html', {
-        'passage': passage, 'questions': questions,
+def week_review(request, number):
+    week = content.get_week(number)
+    if not week:
+        raise Http404
+    sentences = [s for d in week['days'] for s in d['warmup']]
+    return render(request, 'learning/week_review.html', {
+        'week': week,
+        'vocab_json': _vocab_json(content.week_vocab(week)),
+        'sentences': sentences,
+        'questions': content.week_review_questions(week, 20),
+        'quiz_key': f'week-{number}-review',
+        'next_week': content.get_week(number + 1),
     })
 
 
-# ---------- Nghe hieu ----------
-
-def listening_list(request):
-    tracks = ListeningTrack.objects.annotate(n_questions=Count('questions'))
-    return render(request, 'learning/listening_list.html', {'tracks': tracks})
-
-
-def listening_detail(request, pk):
-    track = get_object_or_404(ListeningTrack, pk=pk)
-    questions = track.questions.all()
-    if request.method == 'POST':
-        results, score = _grade(request, questions)
-        return render(request, 'learning/listening_detail.html', {
-            'track': track, 'questions': questions,
-            'results': results, 'score': score, 'total': len(questions),
-            'percent': _pct(score, len(questions)),
-        })
-    return render(request, 'learning/listening_detail.html', {
-        'track': track, 'questions': questions,
+def day_detail(request, number):
+    day = content.get_day(number)
+    if not day:
+        raise Http404
+    return render(request, 'learning/day.html', {
+        'day': day,
+        'week': content.get_week(day['week']),
+        'prev_day': content.get_day(number - 1),
+        'next_day': content.get_day(number + 1),
+        'total_days': content.total_days(),
+        'vocab_json': _vocab_json([dict(w, day=number) for w in day['vocab']]),
+        'key_prefix': f'day-{number}',
+        'today': timezone.localdate(),
     })
 
 
-# ---------- Viet & Noi ----------
-
-def writing(request):
-    lessons = WritingLesson.objects.all()
-    return render(request, 'learning/writing.html', {'lessons': lessons})
-
-
-def speaking(request):
-    lessons = SpeakingLesson.objects.all()
-    return render(request, 'learning/speaking.html', {'lessons': lessons})
-
-
-# ---------- Thi thu ----------
-
-MOCK_N_GRAMMAR = 25
-MOCK_N_VOCAB = 10
-MOCK_N_PASSAGES = 2
-MOCK_MINUTES = 40
-
-
-def mock_test_start(request):
-    return render(request, 'learning/mock_start.html', {
-        'n_grammar': MOCK_N_GRAMMAR, 'n_vocab': MOCK_N_VOCAB,
-        'n_passages': MOCK_N_PASSAGES, 'n_reading': MOCK_N_PASSAGES * 5,
-        'minutes': MOCK_MINUTES,
+def day_practice(request, number):
+    day = content.get_day(number)
+    if not day:
+        raise Http404
+    return render(request, 'learning/practice.html', {
+        'day': day,
+        'title': f'Ngày {number}: {day["title"]}',
+        'back_url': reverse('day', args=[number]),
+        'vocab_json': _vocab_json([dict(w, day=number) for w in day['vocab']]),
+        'pool_json': _vocab_json(content.week_vocab(content.get_week(day['week']))),
     })
 
 
-def mock_test(request):
-    if request.method == 'POST':
-        qids = request.POST.getlist('qid')
-        questions = list(Question.objects.filter(id__in=qids))
-        questions.sort(key=lambda q: qids.index(str(q.id)))
-        results, score = _grade(request, questions)
+def today(request):
+    day, _ = content.scheduled_day(timezone.localdate())
+    return redirect('day', number=day['number'])
 
-        wids = request.POST.getlist('wid')
-        vocab_results = []
-        words = VocabWord.objects.filter(id__in=wids)
-        wmap = {str(w.id): w for w in words}
-        for wid in wids:
-            w = wmap.get(wid)
-            if not w:
-                continue
-            chosen = request.POST.get(f'w{wid}', '(chưa chọn)')
-            ok = chosen == w.meaning_vi
-            if ok:
-                score += 1
-            vocab_results.append({'word': w, 'chosen': chosen, 'ok': ok})
 
-        total = len(results) + len(vocab_results)
-        return render(request, 'learning/mock_result.html', {
-            'results': results, 'vocab_results': vocab_results,
-            'score': score, 'total': total, 'percent': _pct(score, total),
-        })
-
-    grammar_qs = list(Question.objects.filter(skill='grammar'))
-    random.shuffle(grammar_qs)
-    grammar_qs = grammar_qs[:MOCK_N_GRAMMAR]
-
-    passages = list(ReadingPassage.objects.order_by('?')[:MOCK_N_PASSAGES])
-    reading_sections = [{'passage': p, 'questions': list(p.questions.all())}
-                        for p in passages]
-
-    all_words = list(VocabWord.objects.all())
-    vocab_quiz_items = []
-    if len(all_words) >= 4:
-        picked = random.sample(all_words, min(MOCK_N_VOCAB, len(all_words)))
-        meanings = [w.meaning_vi for w in all_words]
-        for w in picked:
-            distractors = random.sample([m for m in meanings if m != w.meaning_vi], 3)
-            opts = distractors + [w.meaning_vi]
-            random.shuffle(opts)
-            vocab_quiz_items.append({'word': w, 'options': opts})
-
-    return render(request, 'learning/mock_test.html', {
-        'grammar_qs': grammar_qs, 'reading_sections': reading_sections,
-        'vocab_quiz': vocab_quiz_items, 'minutes': MOCK_MINUTES,
+def review(request):
+    """Ôn tập ngắt quãng (kiểu Anki) cho mọi từ đã học."""
+    return render(request, 'learning/review.html', {
+        'vocab_json': _vocab_json(content.all_vocab()),
     })
+
+
+def vocab_bank(request):
+    return render(request, 'learning/vocab_bank.html', {
+        'weeks': content.all_weeks(),
+        'total': len(content.all_vocab()),
+    })
+
+
+def phrase_bank(request):
+    return render(request, 'learning/phrases.html', {
+        'groups': content.all_phrases(),
+    })
+
+
+def recordings(request):
+    return render(request, 'learning/recordings.html', {
+        'day_titles': {d['number']: d['title'] for d in content.all_days()},
+    })
+
+
+def settings_page(request):
+    return render(request, 'learning/settings.html', {
+        'voices': tts.VOICES,
+        'speeds': tts.SPEEDS,
+    })
+
+
+@require_GET
+def tts_audio(request):
+    text = tts.clean_text(request.GET.get('t', ''))
+    voice = request.GET.get('v', tts.DEFAULT_VOICE)
+    speed = request.GET.get('s', tts.DEFAULT_SPEED)
+    if not text or len(text) > tts.MAX_CHARS or voice not in tts.VOICES or speed not in tts.SPEEDS:
+        return HttpResponseBadRequest('bad tts params')
+    try:
+        path = tts.get_audio(text, voice, speed)
+    except tts.TTSError:
+        return HttpResponse('tts unavailable', status=503, content_type='text/plain')
+    response = FileResponse(open(path, 'rb'), content_type='audio/mpeg')
+    response['Cache-Control'] = 'public, max-age=31536000, immutable'
+    return response
+
+
+def robots_txt(request):
+    return HttpResponse(
+        f'User-agent: *\nAllow: /\nDisallow: /tts/\n\nSitemap: {settings.SITE_URL}/sitemap.xml\n',
+        content_type='text/plain',
+    )

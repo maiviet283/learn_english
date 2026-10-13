@@ -1,0 +1,19 @@
+{% comment %}Bài trắc nghiệm. Tham số: questions, key, qday + qsection (tùy chọn: tự đánh dấu phần đã xong){% endcomment %}{% load learning_tags %}
+<div class="quiz" data-key="{{ key }}"{% if qday %} data-day="{{ qday }}"{% endif %}{% if qsection %} data-section="{{ qsection }}"{% endif %}>
+  <div class="d-flex align-items-center gap-2 mb-1">
+    <span class="chip gray tabular"><i class="bi bi-ui-checks"></i> <span data-quiz-progress>0/{{ questions|length }}</span></span>
+    <span class="quiz-prev muted small"></span>
+  </div>
+  {% for q in questions %}
+  <div class="q" data-answer="{{ q.answer }}">
+    <div class="q-text"><span class="q-no">{{ forloop.counter }}.</span><span class="flex-grow-1">{{ q.q }}</span>{% if q.say %}{% say q.say %}{% say q.say 'slower' %}{% endif %}</div>
+    <div class="opts">{% for o in q.options %}<button type="button" class="opt en-text">{{ o }}</button>{% endfor %}</div>
+    <div class="explain"><i class="bi bi-lightbulb"></i> {{ q.explain }}</div>
+  </div>
+  {% endfor %}
+  <div class="quiz-result align-items-center gap-3 mt-3 p-3 soft">
+    <div class="score-big"></div>
+    <div class="flex-grow-1"><div class="fw-700 score-msg"></div><div class="small muted">Kết quả đã được lưu.</div></div>
+    <button type="button" class="btn btn-ghost btn-sm" data-act="retry"><i class="bi bi-arrow-repeat"></i> Làm lại</button>
+  </div>
+</div>

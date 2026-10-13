@@ -1,0 +1,22 @@
+{% extends "learning/base.html" %}
+{% block title %}Kho từ vựng · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div id="vocab-bank">
+  <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+    <div><h1 class="h3 fw-800 mb-1">Kho từ vựng</h1><p class="muted mb-0">{{ total }} từ và cụm từ của cả lộ trình, mỗi từ có âm thanh và ví dụ.</p></div>
+    <input id="vocab-search" class="form-control ms-auto" style="max-width:320px" placeholder="Tìm từ hoặc nghĩa…" type="search">
+  </div>
+  {% for w in weeks %}
+  <div class="week-block mb-4">
+    <h2 class="h5 fw-800 mb-3"><span class="week-num">Tuần {{ w.number }}</span> · {{ w.title }}</h2>
+    {% for d in w.days %}
+    <div class="week-block mb-3">
+      <div class="small fw-700 mb-2"><a href="{% url 'day' d.number %}" class="text-decoration-none">Ngày {{ d.number }} · {{ d.title }}</a></div>
+      {% include "learning/partials/_vocab_cards.html" with words=d.vocab %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

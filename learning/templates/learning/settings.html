@@ -1,0 +1,64 @@
+{% extends "learning/base.html" %}
+{% block title %}Cài đặt · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div id="settings">
+  <h1 class="h3 fw-800 mb-3">Cài đặt</h1>
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card-x pad mb-4">
+        <h2 class="h6 fw-800 mb-3"><i class="bi bi-person-voice"></i> Giọng đọc</h2>
+        <label class="form-label small fw-600" for="set-voice">Giọng mặc định (từ vựng, câu ví dụ, bài đọc)</label>
+        <div class="d-flex gap-2 mb-3">
+          <select id="set-voice" class="form-select" data-setting="voice">{% for k, v in voices.items %}<option value="{{ k }}">{{ v.1 }}</option>{% endfor %}</select>
+          <button class="btn btn-soft text-nowrap" type="button" data-test-voice><i class="bi bi-play-fill"></i> Thử</button>
+        </div>
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label small fw-600" for="set-speed">Tốc độ khi bấm nghe</label>
+            <select id="set-speed" class="form-select" data-setting="speed">{% for k, v in speeds.items %}<option value="{{ k }}">{{ v.1 }}</option>{% endfor %}</select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label small fw-600" for="set-shadow">Tốc độ mặc định khi shadowing</label>
+            <select id="set-shadow" class="form-select" data-setting="shadowSpeed">{% for k, v in speeds.items %}<option value="{{ k }}">{{ v.1 }}</option>{% endfor %}</select>
+          </div>
+        </div>
+        <div class="form-check form-switch mt-3">
+          <input class="form-check-input" type="checkbox" id="autoplay" data-setting="autoplay">
+          <label class="form-check-label" for="autoplay">Tự đọc từ khi lật thẻ / ôn tập</label>
+        </div>
+        <p class="small muted mt-3 mb-0">Âm thanh dùng giọng đọc neural của Microsoft, được tạo khi bạn bấm nghe lần đầu (có thể chờ 1–2 giây) rồi lưu lại. Nếu máy chủ không tạo được, trang tự chuyển sang giọng đọc có sẵn của trình duyệt.</p>
+      </div>
+
+      <div class="card-x pad mb-4">
+        <h2 class="h6 fw-800 mb-3"><i class="bi bi-circle-half"></i> Giao diện</h2>
+        <select class="form-select" data-setting="theme" style="max-width:260px" aria-label="Giao diện">
+          <option value="auto">Theo hệ thống</option><option value="light">Sáng</option><option value="dark">Tối</option>
+        </select>
+      </div>
+
+      <div class="card-x pad mb-4">
+        <h2 class="h6 fw-800 mb-2"><i class="bi bi-cloud-arrow-down"></i> Sao lưu tiến độ</h2>
+        <p class="small muted">Tiến độ, điểm, bài viết và lịch ôn từ được lưu trong trình duyệt này. Muốn học trên máy khác, hãy xuất file rồi nhập vào máy kia. (Bản ghi âm tải riêng ở trang Ghi âm.)</p>
+        <div class="d-flex flex-wrap gap-2">
+          <button id="export-btn" class="btn btn-brand btn-sm" type="button"><i class="bi bi-download"></i> Xuất file sao lưu</button>
+          <label class="btn btn-ghost btn-sm mb-0"><i class="bi bi-upload"></i> Nhập file sao lưu<input id="import-file" type="file" accept="application/json" hidden></label>
+          <button id="reset-btn" class="btn btn-ghost btn-sm text-danger ms-auto" type="button"><i class="bi bi-trash"></i> Xóa toàn bộ tiến độ</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card-x pad">
+        <h2 class="h6 fw-800 mb-2"><i class="bi bi-megaphone"></i> Nghe câu bất kỳ</h2>
+        <p class="small muted">Dán một câu hoặc đoạn tiếng Anh (email, tài liệu, câu bạn tự viết…) để nghe cách đọc.</p>
+        <textarea id="free-text" class="form-control en-text mb-2" rows="5" placeholder="Could you clarify why we need a second database?"></textarea>
+        <div class="d-flex gap-2">
+          <select id="free-speed" class="form-select form-select-sm" style="max-width:180px" aria-label="Tốc độ">{% for k, v in speeds.items %}<option value="{{ k }}" {% if k == 'slow' %}selected{% endif %}>{{ v.1 }}</option>{% endfor %}</select>
+          <button id="free-say" class="btn btn-brand btn-sm" type="button"><i class="bi bi-volume-up"></i> Nghe</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

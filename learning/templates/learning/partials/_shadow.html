@@ -1,0 +1,31 @@
+{% comment %}Trình phát shadowing. Tham số: items (list dict en/vi[/voice]){% endcomment %}
+<div class="shadow-player">
+  <div class="player-bar">
+    <button type="button" class="btn btn-brand btn-sm" data-act="play"><i class="bi bi-play-fill"></i> Bắt đầu luyện</button>
+    <label>Tốc độ
+      <select class="form-select form-select-sm d-inline-block" data-opt="speed">
+        <option value="slower">Rất chậm</option><option value="slow">Chậm</option><option value="normal">Bình thường</option><option value="fast">Nhanh</option>
+      </select></label>
+    <label>Lặp
+      <select class="form-select form-select-sm d-inline-block" data-opt="reps"><option value="1">1 lần</option><option value="2" selected>2 lần</option><option value="3">3 lần</option><option value="5">5 lần</option></select></label>
+    <label>Khoảng lặng để nói
+      <select class="form-select form-select-sm d-inline-block" data-opt="pause"><option value="0">Không (đọc đuổi)</option><option value="1">Vừa</option><option value="1.4" selected>Thoải mái</option><option value="2">Dài</option></select></label>
+    <span class="ms-auto d-flex gap-1">
+      <button type="button" class="btn btn-ghost btn-sm" data-act="hide-text" title="Ẩn chữ để luyện nghe">Ẩn chữ</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-act="hide-vi">Ẩn nghĩa</button>
+    </span>
+  </div>
+  {% for it in items %}
+  <div class="shadow-item" data-text="{{ it.en }}"{% if it.voice %} data-voice="{{ it.voice }}"{% endif %}>
+    <div class="idx">{{ forloop.counter }}</div>
+    <div class="flex-grow-1">
+      <div class="en en-text">{{ it.en }}</div>
+      {% if it.vi %}<div class="vi">{{ it.vi }}</div>{% endif %}
+      <span class="turn-label"><i class="bi bi-mic-fill"></i> Đến lượt bạn — nhắc lại!</span>
+      <div class="turn-bar"><span></span></div>
+      <div class="pron-result"></div>
+    </div>
+    <div class="tools"></div>
+  </div>
+  {% endfor %}
+</div>

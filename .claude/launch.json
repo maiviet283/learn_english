@@ -2,12 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "vstep",
-      "runtimeExecutable": "venv\\Scripts\\python.exe",
+      "name": "english",
+      "runtimeExecutable": "venv/Scripts/python.exe",
       "runtimeArgs": ["manage.py", "runserver", "8000", "--noreload", "--insecure"],
       "port": 8000,
       "env": {
-        "PYTHONUTF8": "1"
+        "PYTHONUTF8": "1",
+        "DEBUG": "True"
       }
     }
   ]

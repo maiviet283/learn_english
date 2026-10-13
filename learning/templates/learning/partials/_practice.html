@@ -1,0 +1,11 @@
+<div id="practice" class="card-x pad"{% if day %} data-day="{{ day.number }}"{% endif %}>
+  <div class="mode-tabs d-flex flex-wrap gap-2 mb-3">
+    <button type="button" class="btn btn-ghost btn-sm" data-mode="cards"><i class="bi bi-card-heading"></i> Thẻ từ</button>
+    <button type="button" class="btn btn-ghost btn-sm" data-mode="meaning"><i class="bi bi-translate"></i> Chọn nghĩa</button>
+    <button type="button" class="btn btn-ghost btn-sm" data-mode="listen"><i class="bi bi-ear"></i> Nghe chọn từ</button>
+    <button type="button" class="btn btn-ghost btn-sm" data-mode="type"><i class="bi bi-keyboard"></i> Nghe &amp; gõ</button>
+    <button type="button" class="btn btn-ghost btn-sm" data-mode="gap"><i class="bi bi-input-cursor-text"></i> Điền vào câu</button>
+    <span class="ms-auto d-flex gap-2 align-items-center small muted"><span id="practice-score" class="fw-700" style="color:var(--ok)"></span><span id="practice-progress" class="chip gray tabular"></span></span>
+  </div>
+  <div id="practice-stage" style="min-height:360px"></div>
+</div>

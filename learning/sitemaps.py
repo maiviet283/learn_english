@@ -1,7 +1,7 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
-from .models import (ListeningTrack, ReadingPassage, Unit, VocabTopic)
+from . import content
 
 
 class StaticSitemap(Sitemap):
@@ -10,56 +10,31 @@ class StaticSitemap(Sitemap):
     protocol = 'https'
 
     def items(self):
-        return ['home', 'grammar_list', 'vocab_topics', 'reading_list',
-                'listening_list', 'writing', 'speaking', 'mock_test_start']
+        return ['home', 'roadmap', 'vocab_bank', 'phrases']
 
     def location(self, item):
         return reverse(item)
 
 
-class UnitSitemap(Sitemap):
+class WeekSitemap(Sitemap):
     changefreq = 'monthly'
     priority = 0.8
     protocol = 'https'
 
     def items(self):
-        return Unit.objects.all()
+        return [w['number'] for w in content.all_weeks()]
 
-    def location(self, obj):
-        return reverse('grammar_detail', args=[obj.pk])
-
-
-class VocabTopicSitemap(Sitemap):
-    changefreq = 'monthly'
-    priority = 0.8
-    protocol = 'https'
-
-    def items(self):
-        return VocabTopic.objects.all()
-
-    def location(self, obj):
-        return reverse('vocab_detail', args=[obj.pk])
+    def location(self, number):
+        return reverse('week', args=[number])
 
 
-class ReadingSitemap(Sitemap):
+class DaySitemap(Sitemap):
     changefreq = 'monthly'
     priority = 0.7
     protocol = 'https'
 
     def items(self):
-        return ReadingPassage.objects.all()
+        return [d['number'] for d in content.all_days()]
 
-    def location(self, obj):
-        return reverse('reading_detail', args=[obj.pk])
-
-
-class ListeningSitemap(Sitemap):
-    changefreq = 'monthly'
-    priority = 0.7
-    protocol = 'https'
-
-    def items(self):
-        return ListeningTrack.objects.all()
-
-    def location(self, obj):
-        return reverse('listening_detail', args=[obj.pk])
+    def location(self, number):
+        return reverse('day', args=[number])
