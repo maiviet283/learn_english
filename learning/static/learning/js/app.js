@@ -34,14 +34,16 @@
   };
   const words = (s) => (s.toLowerCase().replace(/[’‘]/g, "'").match(/[a-z0-9']+/g) || []);
 
-  function toast(msg) {
+  function toast(msg, icon = 'bi-check-circle-fill') {
     let t = $('.toast-x');
     if (!t) {
       t = document.createElement('div');
       t.className = 'toast-x';
+      t.setAttribute('role', 'status');
       document.body.appendChild(t);
     }
-    t.textContent = msg;
+    t.innerHTML = `<i class="bi ${icon}"></i><span></span>`;
+    $('span', t).textContent = msg;
     t.classList.add('show');
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('show'), 2200);
@@ -139,10 +141,59 @@
     const pref = Settings.get('theme');
     const dark = pref === 'dark' || (pref === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
-    const icon = $('#theme-toggle i');
-    if (icon) icon.className = dark ? 'bi bi-sun' : 'bi bi-moon-stars';
+    $$('[data-theme-toggle] i').forEach((icon) => (icon.className = dark ? 'bi bi-sun' : 'bi bi-moon-stars'));
   }
   applyTheme();
+
+  /* ---------- Seg control: <div class="seg" data-value> <button data-v> ---------- */
+  const Seg = {
+    set(el, v) {
+      if (!el) return;
+      el.dataset.value = String(v);
+      $$(':scope > button', el).forEach((b) => b.classList.toggle('on', b.dataset.v === String(v)));
+    },
+    init(root = document) {
+      $$('.seg', root).forEach((el) => this.set(el, el.dataset.value ?? ''));
+    },
+  };
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.seg > button');
+    if (!b) return;
+    const seg = b.parentElement;
+    if (seg.dataset.value === b.dataset.v) return;
+    Seg.set(seg, b.dataset.v);
+    seg.dispatchEvent(new CustomEvent('seg:change', { bubbles: true, detail: b.dataset.v }));
+  });
+
+  /** Nút phát chính (.play-main): đổi biểu tượng và nhãn khi đang chạy. */
+  function setRunning(btn, running, label) {
+    btn.dataset.running = running ? '1' : '0';
+    btn.classList.toggle('is-running', running);
+    const i = $('i', btn);
+    if (i) i.className = running ? 'bi bi-stop-fill' : 'bi bi-play-fill';
+    const s = $('span', btn);
+    if (s) s.textContent = running ? 'Dừng' : label || btn.dataset.label || s.textContent;
+  }
+
+  /** Pháo giấy khi hoàn thành ngày học. */
+  function confetti() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const box = document.createElement('div');
+    box.className = 'confetti';
+    const colors = ['#5b4cf0', '#ff6b3d', '#16a34a', '#f59e0b', '#ec4899', '#0ea5a4', '#3b82f6'];
+    for (let i = 0; i < 90; i++) {
+      const p = document.createElement('i');
+      p.style.left = `${Math.random() * 100}%`;
+      p.style.background = colors[i % colors.length];
+      p.style.setProperty('--dx', `${(Math.random() - 0.5) * 240}px`);
+      p.style.setProperty('--rot', `${Math.random() * 900 - 450}deg`);
+      p.style.animationDuration = `${2.2 + Math.random() * 1.8}s`;
+      p.style.animationDelay = `${Math.random() * 0.4}s`;
+      box.appendChild(p);
+    }
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 4600);
+  }
 
   /* =========================================================
    * Speech — phát âm thanh (neural TTS từ server, dự phòng Web Speech)
@@ -565,11 +616,11 @@
     const row = document.createElement('div');
     row.className = 'take';
     const url = URL.createObjectURL(rec.blob);
-    row.innerHTML = `<span class="chip gray tabular">${fmtTime(rec.duration || 0)}</span>
-      <span class="muted">${fmtDate(rec.created)}</span>
+    row.innerHTML = `<span class="chip sm tabular"><i class="bi bi-mic-fill"></i> ${fmtTime(rec.duration || 0)}</span>
+      <span class="faint">${fmtDate(rec.created)}</span>
       <audio controls preload="metadata" src="${url}"></audio>
-      <a class="btn btn-sm btn-ghost" download="${esc((rec.label || 'recording').replace(/[^\w\- ]+/g, ''))}.webm" href="${url}" title="Tải về"><i class="bi bi-download"></i></a>
-      <button type="button" class="btn btn-sm btn-ghost text-danger" title="Xóa"><i class="bi bi-trash"></i></button>`;
+      <a class="icon-btn" download="${esc((rec.label || 'recording').replace(/[^\w\- ]+/g, ''))}.webm" href="${url}" title="Tải về" aria-label="Tải về"><i class="bi bi-download"></i></a>
+      <button type="button" class="icon-btn btn-danger-quiet" title="Xóa" aria-label="Xóa bản ghi"><i class="bi bi-trash"></i></button>`;
     $('button', row).addEventListener('click', async () => {
       if (!confirm('Xóa bản ghi này?')) return;
       await RecDB.remove(rec.id);
@@ -584,16 +635,19 @@
   function initRecorder(el) {
     const key = el.dataset.key;
     const target = Number(el.dataset.seconds || 0);
-    el.innerHTML = `<div class="d-flex align-items-center gap-2 flex-wrap">
-        <button type="button" class="rec-btn"><i class="bi bi-mic-fill"></i> <span>Ghi âm</span></button>
-        <span class="rec-timer tabular">0:00</span>${target ? `<span class="muted small">/ mục tiêu ${fmtTime(target)}</span>` : ''}
-        <span class="muted small ms-auto">${esc(el.dataset.label || '')}</span>
+    el.innerHTML = `<div class="rec-top">
+        <button type="button" class="rec-btn" aria-label="Bắt đầu ghi âm"><i class="bi bi-mic-fill"></i></button>
+        <div class="rec-info">
+          <div class="t">Bấm để ghi âm</div>
+          <div class="d-flex align-items-baseline gap-2"><span class="rec-timer">0:00</span>${target ? `<span class="s">/ mục tiêu ${fmtTime(target)}</span>` : ''}</div>
+          ${target ? '<div class="bar thin mt-2"><span></span></div>' : ''}
+        </div>
       </div>
-      <div class="progress-thin mt-2 ${target ? '' : 'hidden'}"><span></span></div>
-      <div class="takes mt-2"></div>`;
+      <div class="takes"></div>`;
     const btn = $('.rec-btn', el);
+    const label = $('.rec-info .t', el);
     const timerEl = $('.rec-timer', el);
-    const bar = $('.progress-thin span', el);
+    const bar = $('.bar span', el);
     const takes = $('.takes', el);
     let session = null;
 
@@ -601,12 +655,10 @@
       try {
         const list = (await RecDB.byKey(key)).sort((a, b) => b.created - a.created);
         takes.innerHTML = '';
-        if (!list.length) {
-          takes.innerHTML = '<div class="muted small">Chưa có bản ghi. Bản ghi được lưu ngay trong trình duyệt này.</div>';
-        }
+        label.textContent = list.length ? `Bấm để ghi âm · đã có ${list.length} bản` : 'Bấm để ghi âm';
         list.forEach((r) => takes.appendChild(takeRow(r, refresh)));
       } catch (e) {
-        takes.innerHTML = '<div class="muted small">Trình duyệt không cho lưu bản ghi (IndexedDB bị chặn).</div>';
+        takes.innerHTML = '<div class="faint" style="font-size:.84rem">Trình duyệt không cho lưu bản ghi (IndexedDB bị chặn).</div>';
       }
     };
 
@@ -619,25 +671,29 @@
       try {
         session = await Mic.record((sec) => {
           timerEl.textContent = fmtTime(sec);
-          if (target) bar.style.width = `${Math.min(100, (sec / target) * 100)}%`;
+          if (bar) bar.style.width = `${Math.min(100, (sec / target) * 100)}%`;
         });
       } catch (e) {
-        toast('Không mở được micro. Hãy cho phép quyền micro cho trang này.');
+        toast('Không mở được micro. Hãy cho phép quyền micro cho trang này.', 'bi-mic-mute-fill');
         return;
       }
       btn.classList.add('is-recording');
-      $('span', btn).textContent = 'Dừng & lưu';
+      btn.setAttribute('aria-label', 'Dừng và lưu');
+      label.textContent = 'Đang ghi… bấm để dừng & lưu';
       $('i', btn).className = 'bi bi-stop-fill';
       const { blob, duration } = await session.done;
       session = null;
       btn.classList.remove('is-recording');
-      $('span', btn).textContent = 'Ghi âm';
+      btn.setAttribute('aria-label', 'Bắt đầu ghi âm');
       $('i', btn).className = 'bi bi-mic-fill';
-      if (duration < 1) return;
+      if (duration < 1) {
+        refresh();
+        return;
+      }
       await RecDB.add({ key, day: Number(el.dataset.day || 0), week: Number(el.dataset.week || 0), label: el.dataset.label || key, created: Date.now(), duration, blob });
       Store.touch();
       Store.save();
-      toast('Đã lưu bản ghi âm ✓');
+      toast('Đã lưu bản ghi âm');
       refresh();
     });
     refresh();
@@ -687,11 +743,12 @@
     if (!items.length) return;
     const bar = $('.player-bar', el);
     const playBtn = $('[data-act="play"]', bar);
-    const speedSel = $('[data-opt="speed"]', bar);
-    const repSel = $('[data-opt="reps"]', bar);
-    const pauseSel = $('[data-opt="pause"]', bar);
-    speedSel.value = Settings.get('shadowSpeed');
-    speedSel.addEventListener('change', () => Settings.set('shadowSpeed', speedSel.value));
+    const speedSeg = $('[data-opt="speed"]', bar);
+    const repSeg = $('[data-opt="reps"]', bar);
+    const pauseSeg = $('[data-opt="pause"]', bar);
+    const speed = () => speedSeg.dataset.value;
+    Seg.set(speedSeg, Settings.get('shadowSpeed'));
+    speedSeg.addEventListener('seg:change', () => Settings.set('shadowSpeed', speed()));
 
     $('[data-act="hide-text"]', bar)?.addEventListener('click', (e) => {
       el.classList.toggle('hide-text');
@@ -718,7 +775,7 @@
       rec.innerHTML = '<i class="bi bi-mic"></i>';
       rec.addEventListener('click', (e) => {
         e.stopPropagation();
-        QuickRec.toggle(rec, text, { speed: speedSel.value, voice });
+        QuickRec.toggle(rec, text, { speed: speed(), voice });
       });
       tools.append(b1, b2, rec);
       if (Pron.supported) {
@@ -737,7 +794,7 @@
     });
 
     const stopUI = () => {
-      playBtn.innerHTML = '<i class="bi bi-play-fill"></i> Bắt đầu luyện';
+      setRunning(playBtn, false);
       items.forEach((i) => i.classList.remove('is-current', 'is-your-turn'));
     };
 
@@ -746,24 +803,20 @@
         Seq.cancel();
         return;
       }
-      const tok = Seq.start('Shadowing — nghe rồi nhắc lại', () => {
-        playBtn.dataset.running = '0';
-        stopUI();
-      });
-      playBtn.dataset.running = '1';
-      playBtn.innerHTML = '<i class="bi bi-stop-fill"></i> Dừng';
-      const reps = Number(repSel.value);
-      const pauseMul = Number(pauseSel.value);
+      const tok = Seq.start('Shadowing — nghe rồi nhắc lại', stopUI);
+      setRunning(playBtn, true);
+      const reps = Number(repSeg.dataset.value);
+      const pauseMul = Number(pauseSeg.dataset.value);
       const startAt = Math.max(0, items.findIndex((i) => i.classList.contains('is-current')));
       for (let i = startAt; i < items.length; i++) {
         const it = items[i];
         items.forEach((x) => x.classList.remove('is-current'));
         it.classList.add('is-current');
         it.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        if (items[i + 1]) Speech.prefetch(items[i + 1].dataset.text, { speed: speedSel.value, voice: items[i + 1].dataset.voice });
+        if (items[i + 1]) Speech.prefetch(items[i + 1].dataset.text, { speed: speed(), voice: items[i + 1].dataset.voice });
         for (let r = 0; r < reps; r++) {
           const t0 = performance.now();
-          const ok = await Speech.play(it.dataset.text, { speed: speedSel.value, voice: it.dataset.voice });
+          const ok = await Speech.play(it.dataset.text, { speed: speed(), voice: it.dataset.voice });
           if (!Seq.alive(tok)) return;
           if (!ok) break;
           const dur = performance.now() - t0;
@@ -780,7 +833,7 @@
       }
       items.forEach((x) => x.classList.remove('is-current'));
       Seq.end(tok);
-      toast('Xong một lượt shadowing 👏');
+      toast('Xong một lượt shadowing 👏', 'bi-stars');
     });
   }
 
@@ -791,24 +844,27 @@
     const lines = $$('.line', el);
     const bar = $('.player-bar', el);
     const playBtn = $('[data-act="play"]', bar);
-    const speedSel = $('[data-opt="speed"]', bar);
-    const roleSel = $('[data-opt="role"]', bar);
+    const speedSeg = $('[data-opt="speed"]', bar);
+    const speed = () => speedSeg.dataset.value;
+    const roleSeg = $('[data-opt="role"]', bar);
+    const role = () => (roleSeg ? roleSeg.dataset.value : '');
     const scriptBtn = $('[data-act="script"]', bar);
     const viBtn = $('[data-act="vi"]', bar);
 
     scriptBtn.addEventListener('click', () => {
       el.classList.toggle('hide-script');
       scriptBtn.classList.toggle('active', !el.classList.contains('hide-script'));
-      scriptBtn.innerHTML = el.classList.contains('hide-script') ? '<i class="bi bi-eye"></i> Hiện lời' : '<i class="bi bi-eye-slash"></i> Ẩn lời';
+      const hidden = el.classList.contains('hide-script');
+      scriptBtn.innerHTML = hidden ? '<i class="bi bi-eye"></i> Hiện lời' : '<i class="bi bi-eye-slash"></i> Ẩn lời';
     });
     viBtn.addEventListener('click', () => {
       el.classList.toggle('show-vi');
       viBtn.classList.toggle('active');
     });
     const applyRole = () => {
-      lines.forEach((ln) => ln.classList.toggle('is-mine', roleSel.value !== '' && ln.dataset.speaker === roleSel.value));
+      lines.forEach((ln) => ln.classList.toggle('is-mine', role() !== '' && ln.dataset.speaker === role()));
     };
-    roleSel.addEventListener('change', applyRole);
+    roleSeg?.addEventListener('seg:change', applyRole);
 
     lines.forEach((ln) => {
       ln.addEventListener('click', (e) => {
@@ -816,13 +872,12 @@
         Seq.cancel();
         lines.forEach((x) => x.classList.remove('is-current'));
         ln.classList.add('is-current');
-        Speech.play(ln.dataset.text, { voice: ln.dataset.voice, speed: speedSel.value });
+        Speech.play(ln.dataset.text, { voice: ln.dataset.voice, speed: speed() });
       });
     });
 
     const stopUI = () => {
-      playBtn.dataset.running = '0';
-      playBtn.innerHTML = '<i class="bi bi-play-fill"></i> Phát cả bài';
+      setRunning(playBtn, false, 'Phát cả bài');
       lines.forEach((x) => x.classList.remove('is-current', 'is-your-turn'));
     };
 
@@ -831,24 +886,23 @@
         Seq.cancel();
         return;
       }
-      const tok = Seq.start(roleSel.value ? 'Đóng vai — đến lượt bạn thì nói' : 'Đang phát hội thoại', stopUI);
-      playBtn.dataset.running = '1';
-      playBtn.innerHTML = '<i class="bi bi-stop-fill"></i> Dừng';
+      const tok = Seq.start(role() ? 'Đóng vai — đến lượt bạn thì nói' : 'Đang phát hội thoại', stopUI);
+      setRunning(playBtn, true);
       for (let i = 0; i < lines.length; i++) {
         const ln = lines[i];
         lines.forEach((x) => x.classList.remove('is-current'));
         ln.classList.add('is-current');
         ln.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         const next = lines[i + 1];
-        if (next) Speech.prefetch(next.dataset.text, { voice: next.dataset.voice, speed: speedSel.value });
-        if (roleSel.value && ln.dataset.speaker === roleSel.value) {
+        if (next) Speech.prefetch(next.dataset.text, { voice: next.dataset.voice, speed: speed() });
+        if (role() && ln.dataset.speaker === role()) {
           ln.classList.add('is-your-turn');
           const ms = Math.max(2200, words(ln.dataset.text).length * 520 + 1200);
           const alive = await Seq.wait(tok, ms, $('.turn-bar span', ln));
           ln.classList.remove('is-your-turn');
           if (!alive) return;
         } else {
-          const ok = await Speech.play(ln.dataset.text, { voice: ln.dataset.voice, speed: speedSel.value });
+          const ok = await Speech.play(ln.dataset.text, { voice: ln.dataset.voice, speed: speed() });
           if (!Seq.alive(tok)) return;
           if (!ok) break;
           if (!(await Seq.wait(tok, 380))) return;
@@ -894,6 +948,11 @@
       el.classList.add('finished');
       const pct = Math.round((right / qs.length) * 100);
       $('.score-big', result).textContent = `${right}/${qs.length}`;
+      const ring = $('[data-quiz-ring]', result);
+      if (ring) {
+        ring.style.setProperty('--p', pct);
+        ring.style.setProperty('--fill', pct >= 70 ? 'var(--ok)' : pct >= 50 ? 'var(--warn)' : 'var(--bad)');
+      }
       $('.score-msg', result).textContent = pct >= 90 ? 'Xuất sắc! 🎉' : pct >= 70 ? 'Tốt lắm! Xem lại các câu sai nhé.' : 'Cần ôn thêm — đọc kỹ giải thích các câu sai rồi làm lại.';
       if (key) {
         const prev = Store.data.quiz[key];
@@ -989,7 +1048,12 @@
     const update = () => {
       const n = words(ta.value).length;
       count.textContent = `${n} từ${min ? ` / tối thiểu ${min}` : ''}`;
-      count.classList.toggle('text-success', min && n >= min);
+      count.style.color = min && n >= min ? 'var(--ok)' : '';
+      const wb = $('[data-wc-bar]', el);
+      if (wb) {
+        wb.style.width = `${min ? Math.min(100, (n / min) * 100) : n ? 100 : 0}%`;
+        wb.style.background = min && n >= min ? 'var(--ok)' : '';
+      }
     };
     ta.addEventListener('input', () => {
       update();
@@ -1000,7 +1064,7 @@
         Store.save();
         const s = $('.saved', el);
         if (s) {
-          s.textContent = 'Đã lưu ✓';
+          s.innerHTML = '<i class="bi bi-cloud-check"></i> Đã lưu';
           setTimeout(() => (s.textContent = ''), 1500);
         }
       }, 600);
@@ -1103,15 +1167,28 @@
       $$('[data-toc]').forEach((a) => a.classList.toggle('done', !!d.sections[a.dataset.toc]));
       const total = $$('.sec-done').length;
       const done = $$('.sec-done').filter((b) => d.sections[b.dataset.sec]).length;
-      $$('[data-day-progress]').forEach((p) => (p.style.width = `${total ? (done / total) * 100 : 0}%`));
-      $$('[data-day-progress-text]').forEach((p) => (p.textContent = `${done}/${total} phần`));
+      const pct = d.done ? 100 : total ? Math.round((done / total) * 100) : 0;
+      $$('[data-day-progress]').forEach((p) => (p.style.width = `${pct}%`));
+      $$('[data-day-progress-text]').forEach((p) => (p.textContent = `${done}/${total}`));
+      $$('[data-day-progress-label]').forEach((p) => (p.textContent = d.done ? 'Đã hoàn thành' : `${done}/${total} phần · ${pct}%`));
+      $$('[data-day-ring]').forEach((r) => r.style.setProperty('--p', pct));
+      const start = $('[data-act="start-day"] span');
+      if (start) start.textContent = d.done ? 'Ôn lại bài' : done ? 'Học tiếp' : 'Bắt đầu học';
       const fin = $('#finish-day');
       if (fin) {
-        fin.classList.toggle('btn-brand', !d.done);
-        fin.classList.toggle('btn-soft', !!d.done);
+        fin.classList.toggle('done', !!d.done);
         fin.innerHTML = d.done ? `<i class="bi bi-trophy-fill"></i> Đã hoàn thành ngày ${dayNo}${d.doneAt ? ' · ' + d.doneAt.split('-').reverse().join('/') : ''}` : `<i class="bi bi-flag-fill"></i> Hoàn thành ngày ${dayNo}`;
       }
     };
+    // Nút "Học tiếp" nhảy tới phần đầu tiên chưa xong
+    $('[data-act="start-day"]')?.addEventListener('click', (e) => {
+      const d = Store.day(dayNo);
+      const first = $$('.sec-done').find((b) => !d.sections[b.dataset.sec]);
+      if (first && !d.done) {
+        e.preventDefault();
+        document.getElementById(first.dataset.sec)?.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
 
     $$('.sec-done').forEach((b) =>
       b.addEventListener('click', () => {
@@ -1160,7 +1237,8 @@
       Store.touch();
       Store.save();
       paint();
-      toast(`Tuyệt vời! Đã xong ngày ${dayNo} 🎉`);
+      confetti();
+      toast(`Tuyệt vời! Đã xong ngày ${dayNo} 🎉`, 'bi-trophy-fill');
     });
 
     // Mục lục: tô sáng phần đang đọc
@@ -1171,8 +1249,9 @@
           entries.forEach((en) => {
             if (!en.isIntersecting) return;
             $$('[data-toc]').forEach((a) => a.classList.toggle('current', a.dataset.toc === en.target.dataset.section));
-            const pill = $(`.pillnav [data-toc="${en.target.dataset.section}"]`);
-            if (pill) pill.scrollIntoView({ inline: 'center', block: 'nearest' });
+            const pill = $(`.chipnav [data-toc="${en.target.dataset.section}"]`);
+            const nav = pill && pill.parentElement;
+            if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: pill.offsetLeft - nav.clientWidth / 2 + pill.clientWidth / 2, behavior: 'smooth' });
           });
         },
         { rootMargin: '-30% 0px -60% 0px' }
@@ -1191,12 +1270,10 @@
       if (btn.dataset.running === '1') return Seq.cancel();
       const cards = $$('#vocab-list .vcard');
       const tok = Seq.start('Đang đọc từ vựng (từ chậm → câu ví dụ)', () => {
-        btn.dataset.running = '0';
-        btn.innerHTML = '<i class="bi bi-play-fill"></i> Nghe tất cả';
+        setRunning(btn, false, 'Nghe tất cả');
         cards.forEach((c) => c.classList.remove('is-current'));
       });
-      btn.dataset.running = '1';
-      btn.innerHTML = '<i class="bi bi-stop-fill"></i> Dừng';
+      setRunning(btn, true);
       for (const c of cards) {
         cards.forEach((x) => x.classList.remove('is-current'));
         c.classList.add('is-current');
@@ -1246,18 +1323,23 @@
       return re.test(w.ex) ? w.ex.replace(re, '_____') : null;
     };
 
-    const setProgress = () => {
+    const pbar = $('#practice-bar', root);
+    const setProgress = (finished = false) => {
       progress.textContent = `${Math.min(idx + 1, queue.length)}/${queue.length}`;
-      scoreEl.textContent = mode === 'cards' ? '' : `Đúng: ${score}`;
+      scoreEl.innerHTML = mode === 'cards' ? '' : `<i class="bi bi-check2"></i> ${score}`;
+      scoreEl.classList.toggle('hidden', mode === 'cards');
+      if (pbar) pbar.style.width = `${queue.length ? ((finished ? queue.length : idx) / queue.length) * 100 : 0}%`;
     };
 
     const finish = () => {
       Seq.cancel();
       const total = queue.length;
-      stage.innerHTML = `<div class="text-center py-5">
-          <div style="font-size:3rem">🎉</div>
-          <h3 class="fw-800 mt-2">Xong lượt luyện!</h3>
-          ${mode === 'cards' ? `<p class="muted">Bạn đã xem ${total} thẻ.</p>` : `<p class="score-big">${score}/${total}</p>`}
+      setProgress(true);
+      const pct = total ? Math.round((score / total) * 100) : 0;
+      stage.innerHTML = `<div class="done-state fade-in">
+          <div class="emoji">${mode === 'cards' || pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪'}</div>
+          <h3 class="fw-800 mt-3 mb-1">Xong lượt luyện!</h3>
+          ${mode === 'cards' ? `<p class="muted">Bạn đã xem ${total} thẻ. Thử tiếp dạng “Chọn nghĩa” nhé.</p>` : `<div class="score-big my-2">${score}/${total}</div><p class="muted">${pct >= 80 ? 'Rất tốt!' : 'Luyện lại một lượt nữa sẽ nhớ hơn.'}</p>`}
           <button class="btn btn-brand mt-2" data-act="again"><i class="bi bi-arrow-repeat"></i> Luyện lại</button>
         </div>`;
       $('[data-act="again"]', stage).addEventListener('click', () => start(mode));
@@ -1276,7 +1358,7 @@
     };
 
     const choiceUI = (promptHTML, choices, correct, onAfter) => {
-      stage.innerHTML = `<div class="py-3">${promptHTML}</div><div class="choice-grid"></div><div class="feedback mt-3"></div>`;
+      stage.innerHTML = `<div class="py-3 fade-in">${promptHTML}</div><div class="choice-grid"></div><div class="feedback"></div>`;
       const grid = $('.choice-grid', stage);
       choices.forEach((c) => {
         const b = document.createElement('button');
@@ -1290,43 +1372,43 @@
             if (x.textContent === correct) x.classList.add('is-right');
           });
           if (!ok) b.classList.add('is-wrong');
-          $('.feedback', stage).innerHTML = `<button class="btn btn-brand" data-act="next">Tiếp <i class="bi bi-arrow-right"></i></button> <span class="muted small ms-2"><span class="kbd">Enter</span></span>`;
-          $('[data-act="next"]', stage).addEventListener('click', next);
+          $('.feedback', stage).innerHTML = `<div class="mb-1">${ok ? '<span class="chip ok"><i class="bi bi-check-lg"></i> Chính xác</span>' : '<span class="chip" style="background:var(--bad-soft);color:var(--bad)"><i class="bi bi-x-lg"></i> Chưa đúng</span>'}</div>`;
           onAfter && onAfter(ok);
+          $('.feedback', stage).insertAdjacentHTML('beforeend', `<div class="mt-3"><button class="btn btn-brand" data-act="next">Tiếp <i class="bi bi-arrow-right"></i></button> <span class="faint ms-2" style="font-size:.8rem"><span class="kbd">Enter</span></span></div>`);
+          $('[data-act="next"]', stage).addEventListener('click', next);
           setProgress();
         });
         grid.appendChild(b);
       });
     };
 
-    const wordInfo = (w) => `<div class="mt-2"><b>${esc(w.word)}</b> <span class="muted">${esc(w.ipa)}</span> — ${esc(w.vi)}<div class="small mt-1">${esc(w.ex)}</div></div>`;
+    const wordInfo = (w) => `<div><div class="word-info"><b>${esc(w.word)}</b> <span class="faint">${esc(w.ipa)}</span> — ${esc(w.vi)}<div class="mt-1 en-text" style="color:var(--ink-2)">${esc(w.ex)}</div></div></div>`;
 
     const render = () => {
       const w = queue[idx];
       setProgress();
       if (mode === 'cards') {
-        stage.innerHTML = `<div class="flash" tabindex="0">
+        stage.innerHTML = `<div class="flash fade-in" tabindex="0">
             <div class="flash-inner">
               <div class="flash-face flash-front">
                 <div class="big-word en-text">${esc(w.word)}</div>
-                <div class="mt-1" style="opacity:.85">${esc(w.ipa)} · ${esc(w.pos)}</div>
-                <div class="d-flex gap-2 mt-3"></div>
-                <div class="mt-3 small" style="opacity:.75">Bấm vào thẻ để lật</div>
+                <div class="ipa-line">${esc(w.ipa)} · ${esc(w.pos)}</div>
+                <div class="d-flex gap-2 mt-3 say-slot"></div>
+                <div class="hint"><i class="bi bi-arrow-repeat"></i> Bấm vào thẻ để lật</div>
               </div>
               <div class="flash-face flash-back">
-                <div class="fs-4 fw-800" style="color:var(--brand-ink)">${esc(w.vi)}</div>
-                <div class="mt-3 d-flex gap-2 align-items-start text-start"><span class="ex-btn"></span><span class="en-text">${esc(w.ex)}</span></div>
-                <div class="muted small mt-1">${esc(w.ex_vi)}</div>
+                <div class="meaning">${esc(w.vi)}</div>
+                <div class="ex"><span class="ex-btn"></span><div><div class="en-text">${esc(w.ex)}</div><div class="faint mt-1" style="font-size:.86rem">${esc(w.ex_vi)}</div></div></div>
               </div>
             </div>
           </div>
-          <div class="d-flex justify-content-center gap-2 mt-3">
-            <button class="btn btn-ghost" data-act="prev"><i class="bi bi-arrow-left"></i></button>
-            <button class="btn btn-ghost text-danger" data-act="again-card"><i class="bi bi-x-lg"></i> Chưa nhớ</button>
+          <div class="card-actions">
+            <button class="btn btn-ghost" data-act="prev" aria-label="Thẻ trước"><i class="bi bi-arrow-left"></i></button>
+            <button class="btn btn-danger-quiet" data-act="again-card"><i class="bi bi-x-lg"></i> Chưa nhớ</button>
             <button class="btn btn-brand" data-act="know"><i class="bi bi-check-lg"></i> Đã nhớ</button>
           </div>
-          <div class="text-center muted small mt-2"><span class="kbd">Space</span> lật · <span class="kbd">←</span> <span class="kbd">→</span> chuyển · <span class="kbd">P</span> nghe</div>`;
-        const front = $('.flash-front .d-flex', stage);
+          <div class="text-center faint mt-3 d-none d-md-block" style="font-size:.8rem"><span class="kbd">Space</span> lật · <span class="kbd">←</span> <span class="kbd">→</span> chuyển · <span class="kbd">P</span> nghe</div>`;
+        const front = $('.flash-front .say-slot', stage);
         front.append(sayButton(w.word, 'normal'), sayButton(w.word, 'slow', 'slow'));
         $('.ex-btn', stage).append(sayButton(w.ex, 'normal'));
         const card = $('.flash', stage);
@@ -1343,7 +1425,7 @@
         if (Settings.get('autoplay')) Speech.play(w.word);
       } else if (mode === 'meaning') {
         choiceUI(
-          `<div class="prompt-big en-text">${esc(w.word)} <span class="say-slot"></span></div><div class="text-center muted">${esc(w.ipa)}</div><p class="text-center mt-2 muted small">Chọn nghĩa đúng</p>`,
+          `<div class="prompt-big en-text">${esc(w.word)} <span class="say-slot"></span></div><div class="text-center faint" style="font-family:var(--font-ipa)">${esc(w.ipa)}</div><p class="text-center mt-2 muted" style="font-size:.88rem">Chọn nghĩa đúng</p>`,
           shuffle([w.vi, ...others(w, 'vi')]),
           w.vi,
           () => $('.feedback', stage).insertAdjacentHTML('beforeend', wordInfo(w))
@@ -1352,20 +1434,20 @@
         if (Settings.get('autoplay')) Speech.play(w.word);
       } else if (mode === 'listen') {
         choiceUI(
-          `<div class="text-center"><button class="say-btn" style="width:72px;height:72px;font-size:2rem" data-say="${esc(w.word)}"><i class="bi bi-volume-up"></i></button><p class="muted small mt-2">Nghe và chọn từ đúng</p></div>`,
+          `<div class="text-center"><button class="say-btn xl" data-say="${esc(w.word)}" aria-label="Nghe lại"><i class="bi bi-volume-up-fill"></i></button><p class="muted mt-3" style="font-size:.88rem">Nghe và chọn từ đúng</p></div>`,
           shuffle([w.word, ...others(w, 'word')]),
           w.word,
           () => $('.feedback', stage).insertAdjacentHTML('beforeend', wordInfo(w))
         );
         Speech.play(w.word);
       } else if (mode === 'type') {
-        stage.innerHTML = `<div class="text-center py-3">
-            <button class="say-btn" style="width:72px;height:72px;font-size:2rem" data-say="${esc(w.word)}"><i class="bi bi-volume-up"></i></button>
-            <button class="say-btn slow ms-2" data-say="${esc(w.word)}" data-speed="slower"><i class="bi bi-hourglass-split"></i></button>
-            <p class="muted small mt-2">Nghe và gõ lại từ/cụm từ · gợi ý: ${esc(w.vi)}</p>
+        stage.innerHTML = `<div class="text-center py-3 fade-in">
+            <div class="d-inline-flex align-items-center gap-2"><button class="say-btn xl" data-say="${esc(w.word)}" aria-label="Nghe lại"><i class="bi bi-volume-up-fill"></i></button>
+            <button class="say-btn lg slow" data-say="${esc(w.word)}" data-speed="slower" aria-label="Nghe rất chậm"><i class="bi bi-hourglass-split"></i></button></div>
+            <p class="muted mt-3" style="font-size:.88rem">Nghe và gõ lại từ/cụm từ · gợi ý: <b>${esc(w.vi)}</b></p>
           </div>
-          <div class="d-flex gap-2 justify-content-center"><input class="form-control en-text" style="max-width:360px" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ từ bạn nghe được…"><button class="btn btn-brand" data-act="check">Kiểm tra</button></div>
-          <div class="feedback mt-3 text-center"></div>`;
+          <div class="d-flex gap-2 justify-content-center mx-auto" style="max-width:460px"><input class="form-control form-control-lg en-text" autocomplete="off" autocapitalize="off" spellcheck="false" lang="en" placeholder="Gõ từ bạn nghe được…"><button class="btn btn-brand" data-act="check">Kiểm tra</button></div>
+          <div class="feedback"></div>`;
         const input = $('input', stage);
         input.focus();
         let checked = false;
@@ -1375,7 +1457,7 @@
           const norm = (s) => words(s).join(' ');
           const ok = norm(input.value) === norm(w.word);
           if (ok) score++;
-          $('.feedback', stage).innerHTML = `${ok ? '<span class="chip ok"><i class="bi bi-check-lg"></i> Chính xác</span>' : `<span class="chip" style="background:var(--bad-soft);color:var(--bad)">Chưa đúng</span>`}${wordInfo(w)}<button class="btn btn-brand mt-2" data-act="next">Tiếp <i class="bi bi-arrow-right"></i></button>`;
+          $('.feedback', stage).innerHTML = `${ok ? '<span class="chip ok"><i class="bi bi-check-lg"></i> Chính xác</span>' : `<span class="chip" style="background:var(--bad-soft);color:var(--bad)"><i class="bi bi-x-lg"></i> Chưa đúng</span>`}${wordInfo(w)}<div class="mt-3"><button class="btn btn-brand" data-act="next">Tiếp <i class="bi bi-arrow-right"></i></button></div>`;
           $('[data-act="next"]', stage).addEventListener('click', next);
           setProgress();
         };
@@ -1385,7 +1467,7 @@
       } else if (mode === 'gap') {
         const sentence = blankOut(w);
         choiceUI(
-          `<div class="fs-5 text-center en-text">${esc(sentence)}</div><p class="text-center muted small mt-2">${esc(w.ex_vi)}</p>`,
+          `<div class="text-center en-text mx-auto" style="font-size:1.3rem;font-weight:600;max-width:620px;line-height:1.5">${esc(sentence)}</div><p class="text-center muted mt-2" style="font-size:.88rem">${esc(w.ex_vi)}</p>`,
           shuffle([w.word, ...others(w, 'word')]),
           w.word,
           () => {
@@ -1403,17 +1485,17 @@
       let list = shuffle(vocab);
       if (m === 'gap') list = list.filter(blankOut);
       queue = list;
-      $$('.mode-tabs .btn', root).forEach((b) => b.classList.toggle('active', b.dataset.mode === m));
+      Seg.set($('.mode-tabs', root), m);
       if (!queue.length) {
-        stage.innerHTML = '<p class="muted text-center py-4">Không đủ dữ liệu cho dạng bài này.</p>';
+        stage.innerHTML = '<div class="empty"><div class="emoji">🤔</div>Không đủ dữ liệu cho dạng bài này.</div>';
         return;
       }
       render();
     };
 
-    $$('.mode-tabs .btn', root).forEach((b) => b.addEventListener('click', () => start(b.dataset.mode)));
+    $('.mode-tabs', root)?.addEventListener('seg:change', (e) => start(e.detail));
     document.addEventListener('keydown', (e) => {
-      if (e.target.matches('input, textarea')) return;
+      if (e.target.closest && e.target.closest('input, textarea, select')) return;
       if (e.key === 'Enter') $('[data-act="next"]', stage)?.click();
       if (mode !== 'cards') return;
       if (e.key === ' ') {
@@ -1430,6 +1512,7 @@
    * SRS — ôn tập ngắt quãng kiểu Leitner
    * ========================================================= */
   const SRS_INTERVALS = [0, 1, 3, 7, 14, 30, 60];
+  const TOTAL_DAYS = 72;
   const SRS = {
     dueList(today = todayISO()) {
       return Object.entries(Store.data.srs).filter(([, c]) => c.due <= today).map(([k]) => k);
@@ -1469,24 +1552,26 @@
     const render = () => {
       paintStats();
       if (!queue.length) {
-        stage.innerHTML = `<div class="text-center py-5"><div style="font-size:3rem">✅</div><h3 class="fw-800 mt-2">Hết thẻ cần ôn hôm nay!</h3>
-          <p class="muted">${SRS.stats().total ? 'Quay lại vào ngày mai nhé. Từ mới sẽ được thêm khi bạn học xong phần Từ vựng mỗi ngày.' : 'Chưa có từ nào trong lịch ôn. Hãy học phần Từ vựng của một ngày và bấm “Đánh dấu xong”.'}</p>
-          <a href="/hom-nay/" class="btn btn-brand mt-2">Vào bài hôm nay</a></div>`;
+        const has = SRS.stats().total;
+        stage.innerHTML = `<div class="done-state fade-in"><div class="emoji">${has ? '✅' : '🌱'}</div><h3 class="fw-800 mt-3 mb-1">${has ? 'Hết thẻ cần ôn hôm nay!' : 'Lịch ôn đang trống'}</h3>
+          <p class="muted mx-auto" style="max-width:440px">${has ? 'Quay lại vào ngày mai nhé. Từ mới sẽ được thêm khi bạn học xong phần Từ vựng mỗi ngày.' : 'Hãy học phần Từ vựng của một ngày và bấm “Đánh dấu xong” — từ sẽ tự vào lịch ôn.'}</p>
+          <a href="/hom-nay/" class="btn btn-brand mt-2"><i class="bi bi-play-fill"></i> Vào bài hôm nay</a></div>`;
         return;
       }
       const key = queue[0];
       const w = byKey[key];
       const card = Store.data.srs[key];
-      stage.innerHTML = `<div class="flash" tabindex="0"><div class="flash-inner">
-          <div class="flash-face flash-front"><div class="big-word en-text">${esc(w.word)}</div><div class="mt-1" style="opacity:.85">${esc(w.ipa)}</div><div class="d-flex gap-2 mt-3 say-slot"></div><div class="mt-3 small" style="opacity:.75">Nhớ nghĩa rồi bấm để lật · hộp ${card.box}</div></div>
-          <div class="flash-face flash-back"><div class="fs-4 fw-800" style="color:var(--brand-ink)">${esc(w.vi)}</div><div class="mt-3 en-text d-flex gap-2"><span class="ex-btn"></span>${esc(w.ex)}</div><div class="muted small mt-1">${esc(w.ex_vi)}</div><a class="small mt-3" href="/ngay/${w.day}/">Ngày ${w.day}</a></div>
+      const nextIv = SRS_INTERVALS[Math.min(SRS_INTERVALS.length - 1, card.box + 1)];
+      stage.innerHTML = `<div class="flash fade-in" tabindex="0"><div class="flash-inner">
+          <div class="flash-face flash-front"><div class="big-word en-text">${esc(w.word)}</div><div class="ipa-line">${esc(w.ipa)}</div><div class="d-flex gap-2 mt-3 say-slot"></div><div class="hint">Nhớ nghĩa rồi bấm để lật · hộp ${card.box}/6</div></div>
+          <div class="flash-face flash-back"><div class="meaning">${esc(w.vi)}</div><div class="ex"><span class="ex-btn"></span><div><div class="en-text">${esc(w.ex)}</div><div class="faint mt-1" style="font-size:.86rem">${esc(w.ex_vi)}</div></div></div><a class="chip sm mt-3" href="/ngay/${w.day}/">Ngày ${w.day} <i class="bi bi-arrow-up-right"></i></a></div>
         </div></div>
-        <div class="grade-bar d-flex justify-content-center gap-2 mt-3 hidden">
-          <button class="btn btn-ghost text-danger" data-g="0">Quên <span class="kbd">1</span></button>
-          <button class="btn btn-ghost" data-g="1">Nhớ mang máng <span class="kbd">2</span></button>
-          <button class="btn btn-brand" data-g="2">Nhớ rõ <span class="kbd">3</span></button>
+        <div class="grade-bar hidden">
+          <button type="button" data-g="0"><span>Quên</span><small>ôn lại ngay · <span class="kbd">1</span></small></button>
+          <button type="button" data-g="1"><span>Mang máng</span><small>ngày mai · <span class="kbd">2</span></small></button>
+          <button type="button" data-g="2"><span>Nhớ rõ</span><small>sau ${nextIv} ngày · <span class="kbd">3</span></small></button>
         </div>
-        <div class="text-center mt-3 flip-hint"><button class="btn btn-soft" data-act="flip">Lật thẻ <span class="kbd">Space</span></button></div>`;
+        <div class="card-actions flip-hint"><button class="btn btn-brand btn-lg" data-act="flip"><i class="bi bi-arrow-repeat"></i> Lật thẻ <span class="kbd ms-1">Space</span></button></div>`;
       $('.say-slot', stage).append(sayButton(w.word, 'normal'), sayButton(w.word, 'slow', 'slow'));
       $('.ex-btn', stage).append(sayButton(w.ex, 'normal'));
       const flash = $('.flash', stage);
@@ -1511,7 +1596,7 @@
     };
 
     document.addEventListener('keydown', (e) => {
-      if (e.target.matches('input, textarea')) return;
+      if (e.target.closest && e.target.closest('input, textarea, select')) return;
       if (e.key === ' ') {
         e.preventDefault();
         $('[data-act="flip"]', stage)?.click();
@@ -1526,7 +1611,7 @@
       const n = addWordsToSRS(all.filter((w) => days.includes(w.day)));
       Store.save();
       queue = shuffle(SRS.dueList().filter((k) => byKey[k]));
-      toast(n ? `Đã thêm ${n} từ của các ngày đã hoàn thành` : 'Không có từ mới để thêm');
+      toast(n ? `Đã thêm ${n} từ của các ngày đã hoàn thành` : 'Không có từ mới để thêm', n ? 'bi-check-circle-fill' : 'bi-info-circle');
       render();
     });
     render();
@@ -1546,11 +1631,50 @@
       el.textContent = `${days.filter((n) => Store.isDayDone(n)).length}/${days.length}`;
     });
     const due = SRS.dueList().length;
-    $$('.srs-due-badge').forEach((b) => (b.textContent = due ? String(due) : ''));
+    $$('.srs-due-badge').forEach((b) => (b.textContent = due ? String(due > 99 ? '99+' : due) : ''));
+
+    // Thống kê chung trên mọi trang (thanh bên, trang chủ, lộ trình)
+    const total = TOTAL_DAYS;
+    const done = Store.doneCount();
+    const pct = Math.round((done / total) * 100);
+    const streak = Store.streak();
+    $$('[data-streak]').forEach((el) => (el.textContent = streak));
+    $$('[data-done-count]').forEach((el) => (el.textContent = `${done}/${total}`));
+    $$('[data-overall-bar]').forEach((el) => (el.style.width = `${pct}%`));
+    $$('[data-overall-ring]').forEach((el) => el.style.setProperty('--p', pct));
+    $$('[data-overall-pct]').forEach((el) => (el.textContent = `${pct}%`));
+    $$('[data-week-bar]').forEach((el) => {
+      const days = el.dataset.weekBar.split(',');
+      el.style.width = `${(days.filter((n) => Store.isDayDone(n)).length / days.length) * 100}%`;
+    });
+
+    // Lịch học dạng heatmap
+    const hm = $('[data-heatmap]');
+    if (hm) {
+      const today = hm.dataset.today || todayISO();
+      $$('span', hm).forEach((c) => {
+        c.classList.toggle('today', c.dataset.date === today);
+        if (!c.dataset.day) return;
+        const isDone = Store.isDayDone(c.dataset.day);
+        c.classList.toggle('done', isDone);
+        c.classList.toggle('act', !isDone && (Store.dayPartial(c.dataset.day) || !!Store.data.activity[c.dataset.date]));
+      });
+    }
+
+    // Vòng tiến độ bài hôm nay (trang chủ)
+    const tr = $('[data-today-ring]');
+    if (tr) {
+      const d = Store.data.days[tr.dataset.day] || { sections: {} };
+      const n = Object.values(d.sections || {}).filter(Boolean).length;
+      const p = d.done ? 100 : Math.min(95, Math.round((n / Number(tr.dataset.sections || 8)) * 100));
+      tr.style.setProperty('--p', p);
+      $$('[data-today-pct]').forEach((el) => (el.textContent = `${p}%`));
+      $$('[data-today-cta]').forEach((el) => (el.textContent = d.done ? 'Ôn lại bài hôm nay' : n ? 'Học tiếp' : 'Bắt đầu học'));
+    }
   }
 
   function initHome() {
-    const total = Number($('#home-stats')?.dataset.total || 72);
+    const total = TOTAL_DAYS;
     const done = Store.doneCount();
     const s = SRS.stats();
     const set = (id, v) => {
@@ -1561,8 +1685,8 @@
     set('stat-streak', Store.streak());
     set('stat-words', s.total);
     set('stat-due', s.due);
-    const bar = $('#overall-progress');
-    if (bar) bar.style.width = `${(done / total) * 100}%`;
+    const h = new Date().getHours();
+    $$('[data-greeting]').forEach((el) => (el.textContent = h < 11 ? 'Chào buổi sáng ☀️' : h < 14 ? 'Chào buổi trưa 🌤️' : h < 18 ? 'Chào buổi chiều 🌇' : 'Chào buổi tối 🌙'));
     // Bài tiếp theo chưa hoàn thành
     let nextDay = 1;
     while (nextDay <= total && Store.isDayDone(nextDay)) nextDay++;
@@ -1584,11 +1708,11 @@
     try {
       recs = (await RecDB.all()).sort((a, b) => a.created - b.created);
     } catch (e) {
-      list.innerHTML = '<p class="muted">Trình duyệt không hỗ trợ lưu bản ghi.</p>';
+      list.innerHTML = '<div class="panel empty"><div class="emoji">🚫</div>Trình duyệt không hỗ trợ lưu bản ghi.</div>';
       return;
     }
     if (!recs.length) {
-      list.innerHTML = '<div class="text-center py-5 muted"><div style="font-size:3rem">🎙️</div>Chưa có bản ghi nào. Các bản ghi ở phần <b>Nói</b> mỗi ngày sẽ hiện ở đây.</div>';
+      list.innerHTML = '<div class="panel empty"><div class="emoji">🎙️</div><div class="fw-800 mb-1" style="color:var(--ink)">Chưa có bản ghi nào</div>Các bản ghi ở phần <b>Nói</b> mỗi ngày sẽ hiện ở đây.<div class="mt-3"><a href="/hom-nay/" class="btn btn-brand btn-sm">Vào bài hôm nay</a></div></div>';
     }
     const groups = {};
     recs.forEach((r) => (groups[r.day] = groups[r.day] || []).push(r));
@@ -1596,11 +1720,12 @@
       .sort((a, b) => a - b)
       .forEach((day) => {
         const box = document.createElement('div');
-        box.className = 'card-x pad mb-3';
-        box.innerHTML = `<div class="d-flex align-items-center gap-2 mb-2"><span class="chip">Ngày ${day}</span><a class="fw-700 text-decoration-none" href="/ngay/${day}/">${esc(titles[day] || '')}</a></div>`;
+        box.className = 'panel panel-pad mb-3';
+        box.innerHTML = `<a class="d-flex align-items-center gap-2 mb-1" style="color:var(--ink)" href="/ngay/${day}/"><span class="chip brand">Ngày ${day}</span><span class="fw-800">${esc(titles[day] || '')}</span><i class="bi bi-arrow-up-right ms-auto faint"></i></a>`;
         groups[day].forEach((r) => {
           const lab = document.createElement('div');
-          lab.className = 'small fw-600 mt-2';
+          lab.className = 'faint fw-700 mt-3 mb-1';
+          lab.style.fontSize = '.8rem';
           lab.textContent = r.label;
           box.appendChild(lab);
           box.appendChild(takeRow(r, () => {}));
@@ -1619,8 +1744,11 @@
       });
       b.value = String(recs.length - 1);
       $('#cmp-wrap', root).classList.remove('hidden');
-      $('#cmp-play', root).addEventListener('click', async () => {
+      const cmpBtn = $('#cmp-play', root);
+      cmpBtn.addEventListener('click', async () => {
+        if (cmpBtn.dataset.running === '1') return Seq.cancel();
         const tok = Seq.start('So sánh 2 bản ghi');
+        setRunning(cmpBtn, true);
         for (const sel of [a, b]) {
           const r = recs[Number(sel.value)];
           const au = new Audio(URL.createObjectURL(r.blob));
@@ -1631,9 +1759,10 @@
             au.onerror = res;
             au.play().catch(res);
           });
-          if (!Seq.alive(tok)) return;
+          if (!Seq.alive(tok)) break;
           await sleep(600);
         }
+        setRunning(cmpBtn, false, 'Phát lần lượt');
         Seq.end(tok);
       });
     }
@@ -1643,8 +1772,8 @@
     if (rb) {
       const rows = Object.entries(Store.data.rubric).sort((x, y) => (x[1].at || 0) - (y[1].at || 0));
       rb.innerHTML = rows.length
-        ? rows.map(([k, r]) => `<tr><td>${esc(k.replace('day-', 'Ngày '))}</td><td>${r.fluency || '–'}</td><td>${r.vocab || '–'}</td><td>${r.grammar || '–'}</td><td>${r.pron || '–'}</td><td class="muted small">${r.at ? fmtDate(r.at) : ''}</td></tr>`).join('')
-        : '<tr><td colspan="6" class="muted">Chưa có. Tự chấm ở Ngày 1, 18, 67…</td></tr>';
+        ? rows.map(([k, r]) => `<tr><td class="fw-700">${esc(k.replace('day-', 'Ngày '))}</td>${['fluency', 'vocab', 'grammar', 'pron'].map((f) => `<td>${r[f] ? `<span class="chip sm ${r[f] >= 4 ? 'ok' : r[f] >= 3 ? 'warn' : ''}">${r[f]}/5</span>` : '–'}</td>`).join('')}<td class="faint" style="font-size:.8rem">${r.at ? fmtDate(r.at) : ''}</td></tr>`).join('')
+        : '<tr><td colspan="6" class="faint">Chưa có. Tự chấm ở Ngày 1, 18, 67…</td></tr>';
     }
   }
 
@@ -1652,27 +1781,36 @@
    * Cài đặt: giọng đọc, tốc độ, giao diện, sao lưu
    * ========================================================= */
   function initSettings(root) {
+    const saved = (key, val) => {
+      Settings.set(key, val);
+      if (key === 'theme') applyTheme();
+      toast('Đã lưu cài đặt');
+    };
     $$('[data-setting]', root).forEach((input) => {
       const key = input.dataset.setting;
       const v = Settings.get(key);
+      if (input.classList.contains('seg')) {
+        Seg.set(input, v);
+        input.addEventListener('seg:change', (e) => saved(key, e.detail));
+        return;
+      }
       if (input.type === 'checkbox') input.checked = !!v;
+      else if (input.type === 'radio') input.checked = input.value === String(v);
       else input.value = String(v);
-      input.addEventListener('change', () => {
-        let val = input.type === 'checkbox' ? input.checked : input.value;
-        if (key === 'gap') val = Number(val);
-        Settings.set(key, val);
-        if (key === 'theme') applyTheme();
-        toast('Đã lưu cài đặt');
-      });
+      input.addEventListener('change', () => saved(key, input.type === 'checkbox' ? input.checked : input.value));
     });
     $$('[data-test-voice]', root).forEach((b) =>
-      b.addEventListener('click', () => Speech.play('Hello! This is how I sound. I hope you enjoy learning English with me.', { voice: $('[data-setting="voice"]', root).value, el: b }))
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (b.classList.contains('is-playing') || b.classList.contains('is-loading')) return Speech.stop();
+        Speech.play('Hello! This is how I sound. I hope you enjoy learning English with me.', { voice: b.dataset.testVoice, el: b });
+      })
     );
     $('#free-say')?.addEventListener('click', (e) => {
       const txt = $('#free-text').value.trim();
-      if (!txt) return;
+      if (!txt) return toast('Hãy dán một câu tiếng Anh trước', 'bi-info-circle');
       Seq.cancel();
-      Speech.play(txt.slice(0, 1500), { speed: $('#free-speed').value, el: e.currentTarget });
+      Speech.play(txt.slice(0, 1500), { speed: $('#free-speed').dataset.value, el: e.currentTarget });
     });
     $('#export-btn')?.addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(Store.data, null, 2)], { type: 'application/json' });
@@ -1710,25 +1848,72 @@
    * ========================================================= */
   function initVocabBank(root) {
     const input = $('#vocab-search', root);
-    const rows = $$('.vcard', root);
+    const rows = $$('.vrow', root);
+    const count = $('#vocab-count', root);
+    let week = '';
     const paintKnown = () =>
       rows.forEach((r) => {
         const c = Store.data.srs[r.dataset.word.toLowerCase()];
         const badge = $('.known', r);
         if (badge) badge.classList.toggle('hidden', !(c && c.box >= 3));
       });
+    const filter = () => {
+      const q = input.value.trim().toLowerCase();
+      let shown = 0;
+      $$('.week-block', root).forEach((b) => {
+        const inWeek = !week || b.dataset.week === week;
+        let any = 0;
+        $$('.day-block', b).forEach((d) => {
+          let n = 0;
+          $$('.vrow', d).forEach((r) => {
+            const ok = inWeek && (!q || r.dataset.search.includes(q));
+            r.classList.toggle('hidden', !ok);
+            if (ok) n++;
+          });
+          d.classList.toggle('hidden', !n);
+          any += n;
+        });
+        b.classList.toggle('hidden', !any);
+        shown += any;
+      });
+      if (count) count.textContent = shown;
+      $('#vocab-empty', root)?.classList.toggle('hidden', shown > 0);
+    };
+    input?.addEventListener('input', filter);
+    $$('#week-filter button', root).forEach((b) =>
+      b.addEventListener('click', () => {
+        week = b.dataset.week;
+        $$('#week-filter button', root).forEach((x) => x.classList.toggle('on', x === b));
+        filter();
+      })
+    );
+    paintKnown();
+  }
+
+  function initPhraseBank(root) {
+    const input = $('#phrase-search', root);
     input?.addEventListener('input', () => {
       const q = input.value.trim().toLowerCase();
-      rows.forEach((r) => r.classList.toggle('hidden', q && !r.dataset.search.includes(q)));
-      $$('.week-block', root).forEach((b) => b.classList.toggle('hidden', !$$('.vcard:not(.hidden)', b).length));
+      let shown = 0;
+      $$('.phrase-group', root).forEach((g) => {
+        let n = 0;
+        $$('.phrase', g).forEach((p) => {
+          const ok = !q || p.dataset.search.includes(q);
+          p.classList.toggle('hidden', !ok);
+          if (ok) n++;
+        });
+        g.classList.toggle('hidden', !n);
+        shown += n;
+      });
+      $('#phrase-empty', root)?.classList.toggle('hidden', shown > 0);
     });
-    paintKnown();
   }
 
   /* =========================================================
    * Khởi động
    * ========================================================= */
   document.addEventListener('DOMContentLoaded', () => {
+    Seg.init();
     enhanceLesson();
     $$('.shadow-player').forEach(initShadow);
     $$('.dialogue').forEach(initDialogue);
@@ -1750,15 +1935,20 @@
     if (settings) initSettings(settings);
     const bank = $('#vocab-bank');
     if (bank) initVocabBank(bank);
+    const phrases = $('#phrase-bank');
+    if (phrases) initPhraseBank(phrases);
     if ($('#home-stats')) initHome();
     paintDayStatus();
     document.addEventListener('store:change', paintDayStatus);
 
-    $('#theme-toggle')?.addEventListener('click', () => {
-      const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-      Settings.set('theme', dark ? 'light' : 'dark');
-      applyTheme();
-    });
+    $$('[data-theme-toggle]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        Settings.set('theme', dark ? 'light' : 'dark');
+        applyTheme();
+      })
+    );
+    applyTheme();
     $('#now-playing button')?.addEventListener('click', () => Seq.cancel());
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') Seq.cancel();

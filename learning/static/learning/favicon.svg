@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0f766e"/>
-  <text x="11" y="43" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#ffffff">E</text>
-  <path d="M36 24v16M42 18v28M48 26v12M54 22v20" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6d5cff"/><stop offset=".6" stop-color="#5b4cf0"/><stop offset="1" stop-color="#b84fd6"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#g)"/><g transform="translate(8 8)"><path d="M10 11h17M10 24h14M10 37h17M10 11v26" stroke="#fff" stroke-width="5.2" stroke-linecap="round" fill="none"/><path d="M34 18v12M40 14v20" stroke="#ffd36e" stroke-width="4.8" stroke-linecap="round"/></g></svg>

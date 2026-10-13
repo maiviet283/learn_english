@@ -192,6 +192,7 @@ def _normalize_day(raw, number, week, index):
             'model_en': model_en,
             'model_vi': model_vi,
             'model_sentences': split_sentences(model_en) if model_en else [],
+            'model_items': [{'en': x} for x in split_sentences(model_en)] if model_en else [],
             'seconds': spk.get('seconds', 120),
         }
 

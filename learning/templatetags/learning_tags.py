@@ -5,7 +5,7 @@ register = template.Library()
 
 
 @register.simple_tag
-def say(text, speed='normal', voice='', size='sm'):
+def say(text, speed='normal', voice='', size=''):
     """Nút loa phát một câu tiếng Anh. speed=slow/slower hiện icon đồng hồ cát (đọc chậm)."""
     slow = speed in ('slow', 'slower')
     return format_html(

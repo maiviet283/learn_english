@@ -2,39 +2,36 @@
 {% block title %}Ôn tập tuần {{ week.number }} · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="crumbs mb-2"><a href="{% url 'roadmap' %}">Lộ trình</a> › <a href="{% url 'week' week.number %}">Tuần {{ week.number }}</a> › Chủ nhật</div>
-<div class="card-x pad mb-4">
-  <span class="chip amber mb-2"><i class="bi bi-cup-hot"></i> Chủ nhật {{ week.sunday|date:"d/m/Y" }} · 20 phút</span>
-  <h1 class="h3 fw-800 mb-1">Ôn tập tuần {{ week.number }}: {{ week.title }}</h1>
-  <p class="muted mb-0">Nghỉ ngơi cũng là một phần của việc học. Hôm nay chỉ ôn nhẹ, <b>không học thêm từ mới</b>. Chọn 2–3 việc dưới đây.</p>
-</div>
+<div class="page">
+  <nav class="crumbs"><a href="{% url 'roadmap' %}">Lộ trình</a><i class="bi bi-chevron-right"></i><a href="{% url 'week' week.number %}">Tuần {{ week.number }}</a><i class="bi bi-chevron-right"></i><span>Chủ nhật</span></nav>
+  <section class="hero hero-warm mb-4">
+    <div class="hero-pad">
+      <span class="chip glass"><i class="bi bi-cup-hot"></i> Chủ nhật {{ week.sunday|date:"d/m/Y" }} · 20 phút</span>
+      <h1 class="hero-title">Ôn tập tuần {{ week.number }}</h1>
+      <p class="hero-sub mb-0" style="max-width:640px">{{ week.title }}. Nghỉ ngơi cũng là một phần của việc học — hôm nay chỉ ôn nhẹ, <b>không học thêm từ mới</b>. Chọn 2–3 việc dưới đây.</p>
+    </div>
+  </section>
 
-<section class="mb-4">
-  <h2 class="h5 fw-800 mb-3"><i class="bi bi-mic"></i> 1. Nghe lại bản ghi âm trong tuần</h2>
-  <div class="card-x pad">
-    <p class="small muted mb-2">So sánh bản ghi đầu tuần và cuối tuần: bạn trôi chảy hơn chưa? Âm cuối đã rõ hơn chưa?</p>
-    <a href="{% url 'recordings' %}" class="btn btn-soft btn-sm"><i class="bi bi-collection-play"></i> Mở thư viện bản ghi</a>
+  <div class="row g-3">
+    <div class="col-6 col-xl-3"><a href="#vocab-review" class="panel panel-pad panel-link h-100 d-block"><span class="icon-tile sk-vocab mb-3"><i class="bi bi-card-heading"></i></span><div class="fw-800">Ôn {{ vocab_json|length }} từ</div><div class="faint" style="font-size:.84rem">Thẻ từ và 4 dạng bài</div></a></div>
+    <div class="col-6 col-xl-3"><a href="#shadow-review" class="panel panel-pad panel-link h-100 d-block"><span class="icon-tile sk-warmup mb-3"><i class="bi bi-soundwave"></i></span><div class="fw-800">Shadowing lại</div><div class="faint" style="font-size:.84rem">{{ sentences|length }} câu khởi động</div></a></div>
+    <div class="col-6 col-xl-3"><a href="#quiz-review" class="panel panel-pad panel-link h-100 d-block"><span class="icon-tile sk-quiz mb-3"><i class="bi bi-ui-checks"></i></span><div class="fw-800">{{ questions|length }} câu ôn tập</div><div class="faint" style="font-size:.84rem">Ngẫu nhiên từ cả tuần</div></a></div>
+    <div class="col-6 col-xl-3"><a href="{% url 'recordings' %}" class="panel panel-pad panel-link h-100 d-block"><span class="icon-tile sk-speaking mb-3"><i class="bi bi-mic"></i></span><div class="fw-800">Nghe lại bản ghi</div><div class="faint" style="font-size:.84rem">Đầu tuần so với cuối tuần</div></a></div>
   </div>
-</section>
 
-<section class="mb-4">
-  <h2 class="h5 fw-800 mb-3"><i class="bi bi-card-heading"></i> 2. Ôn {{ vocab_json|length }} từ vựng của tuần</h2>
+  <div class="group-title" id="vocab-review"><span class="icon-tile sm sk-vocab"><i class="bi bi-card-heading"></i></span><h2>Ôn từ vựng của tuần</h2></div>
   {% include "learning/partials/_practice.html" %}
-</section>
 
-<section class="mb-4">
-  <h2 class="h5 fw-800 mb-3"><i class="bi bi-soundwave"></i> 3. Shadowing lại các câu khởi động</h2>
-  <div class="card-x pad">{% include "learning/partials/_shadow.html" with items=sentences %}</div>
-</section>
+  <div class="group-title" id="shadow-review"><span class="icon-tile sm sk-warmup"><i class="bi bi-soundwave"></i></span><h2>Shadowing các câu khởi động</h2></div>
+  <div class="panel panel-pad sk-warmup">{% include "learning/partials/_shadow.html" with items=sentences %}</div>
 
-<section class="mb-4">
-  <h2 class="h5 fw-800 mb-3"><i class="bi bi-ui-checks"></i> 4. {{ questions|length }} câu ôn tập ngẫu nhiên</h2>
-  <div class="card-x pad">{% include "learning/partials/_quiz.html" with questions=questions key=quiz_key %}</div>
-</section>
+  <div class="group-title" id="quiz-review"><span class="icon-tile sm sk-quiz"><i class="bi bi-ui-checks"></i></span><h2>{{ questions|length }} câu ôn tập ngẫu nhiên</h2></div>
+  <div class="panel panel-pad">{% include "learning/partials/_quiz.html" with questions=questions key=quiz_key %}</div>
 
-<div class="d-flex gap-2">
-  <a class="btn btn-ghost" href="{% url 'week' week.number %}"><i class="bi bi-arrow-left"></i> Tuần {{ week.number }}</a>
-  {% if next_week %}<a class="btn btn-brand ms-auto" href="{% url 'day' next_week.days.0.number %}">Bắt đầu tuần {{ next_week.number }} <i class="bi bi-arrow-right"></i></a>{% endif %}
+  <div class="d-flex gap-2 mt-4">
+    <a class="btn btn-ghost" href="{% url 'week' week.number %}"><i class="bi bi-arrow-left"></i> Tuần {{ week.number }}</a>
+    {% if next_week %}<a class="btn btn-brand ms-auto" href="{% url 'day' next_week.days.0.number %}">Bắt đầu tuần {{ next_week.number }} <i class="bi bi-arrow-right"></i></a>{% endif %}
+  </div>
 </div>
 {% endblock %}
 

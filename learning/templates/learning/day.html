@@ -5,165 +5,161 @@
 {% block description %}Tuần {{ week.number }}, ngày {{ day.number }}: {{ day.title }} ({{ day.title_en }}). {{ day.goal }}{% endblock %}
 
 {% block content %}
-<div id="day-page" data-day="{{ day.number }}">
+<div class="page" id="day-page" data-day="{{ day.number }}">
+  <nav class="crumbs"><a href="{% url 'roadmap' %}">Lộ trình</a><i class="bi bi-chevron-right"></i><a href="{% url 'week' week.number %}">Tuần {{ week.number }}</a><i class="bi bi-chevron-right"></i><span>Ngày {{ day.number }}</span></nav>
 
-  <div class="crumbs mb-2"><a href="{% url 'roadmap' %}">Lộ trình</a> › <a href="{% url 'week' week.number %}">Tuần {{ week.number }}</a> › Ngày {{ day.number }}</div>
-
-  <div class="day-head card-x pad mb-3">
-    <div class="d-flex flex-wrap gap-2 mb-2">
-      <span class="chip">Ngày {{ day.number }}/{{ total_days }}</span>
-      <span class="chip gray"><i class="bi bi-calendar3"></i> {{ day.weekday }}, {{ day.date|date:"d/m/Y" }}</span>
-      <span class="chip gray"><i class="bi bi-clock"></i> 90 phút</span>
-      {% if day.date == today %}<span class="chip amber"><i class="bi bi-star-fill"></i> Hôm nay</span>{% endif %}
-    </div>
-    <h1 class="h3 mb-1">{{ day.title }}</h1>
-    <div class="muted en-text mb-3">{{ day.title_en }}</div>
-    <p class="mb-3"><b>Mục tiêu:</b> {{ day.goal }}</p>
-    <div class="row g-3">
-      <div class="col-md-7">
-        <div class="small-caps mb-1">Việc cần làm hôm nay</div>
-        <ol class="mb-0 ps-3">{% for t in day.tasks %}<li class="mb-1">{{ t }}</li>{% endfor %}</ol>
+  {# ---------- Hero ---------- #}
+  <section class="hero day-hero mb-4">
+    <div class="hero-pad d-flex flex-wrap align-items-center gap-4">
+      <div class="flex-grow-1" style="min-width:260px">
+        <div class="meta">
+          <span class="chip glass">Ngày {{ day.number }}/{{ total_days }}</span>
+          <span class="chip glass"><i class="bi bi-calendar3"></i> {{ day.weekday }}, {{ day.date|date:"d/m/Y" }}</span>
+          <span class="chip glass"><i class="bi bi-clock"></i> 90 phút</span>
+          {% if day.date == today %}<span class="chip" style="background:#fff;color:#3a2db8"><i class="bi bi-star-fill"></i> Hôm nay</span>{% endif %}
+        </div>
+        <h1 class="hero-title">{{ day.title }}</h1>
+        <div class="hero-sub mb-3" style="font-size:1.05rem">{{ day.title_en }}</div>
+        <p class="goal">{{ day.goal }}</p>
+        <div class="d-flex flex-wrap gap-2 mt-4">
+          <a href="#{{ sections.0.key }}" class="btn btn-white" data-act="start-day"><i class="bi bi-play-fill"></i> <span>Bắt đầu học</span></a>
+          <a href="{% url 'day_practice' day.number %}" class="btn btn-glass"><i class="bi bi-lightning-charge"></i> Luyện thẻ từ</a>
+          <span class="day-nav ms-sm-auto">
+            {% if prev_day %}<a class="btn btn-glass" href="{% url 'day' prev_day.number %}" title="Ngày {{ prev_day.number }}: {{ prev_day.title }}" aria-label="Ngày trước"><i class="bi bi-arrow-left"></i></a>{% endif %}
+            {% if next_day %}<a class="btn btn-glass" href="{% url 'day' next_day.number %}" title="Ngày {{ next_day.number }}: {{ next_day.title }}" aria-label="Ngày sau"><i class="bi bi-arrow-right"></i></a>{% endif %}
+          </span>
+        </div>
       </div>
-      <div class="col-md-5">
-        <div class="small-caps mb-1">Sản phẩm kiểm tra</div>
-        <ul class="mb-3 ps-3">{% for p in day.products %}<li>{{ p }}</li>{% endfor %}</ul>
-        <div class="d-flex justify-content-between small muted mb-1"><span>Tiến độ trong ngày</span><span data-day-progress-text></span></div>
-        <div class="progress-thin"><span data-day-progress></span></div>
+      <div class="ring on-dark d-none d-md-grid" data-day-ring>
+        <div class="text-center"><b class="tabular" data-day-progress-text>0/{{ sections|length }}</b><small>phần đã xong</small></div>
       </div>
     </div>
-  </div>
+  </section>
 
-  {% with has_listen=day.listening has_speak=day.speaking has_read=day.reading has_write=day.writing %}
-  <nav class="pillnav d-lg-none mb-3" aria-label="Các phần trong ngày">
-    <a href="#warmup" data-toc="warmup">Khởi động</a>
-    <a href="#vocab" data-toc="vocab">Từ vựng</a>
-    <a href="#lesson" data-toc="lesson">Kiến thức</a>
-    {% if has_listen %}<a href="#listening" data-toc="listening">Nghe</a>{% endif %}
-    {% if has_speak %}<a href="#speaking" data-toc="speaking">Nói</a>{% endif %}
-    {% if has_read %}<a href="#reading" data-toc="reading">Đọc</a>{% endif %}
-    {% if has_write %}<a href="#writing" data-toc="writing">Viết</a>{% endif %}
-    {% if day.quiz %}<a href="#quiz" data-toc="quiz">Bài tập</a>{% endif %}
-    <a href="#finish">Hoàn thành</a>
+  {# ---------- Nhiệm vụ ---------- #}
+  <section class="panel panel-pad mb-4">
+    <div class="tasks">
+      <div>
+        <div class="eyebrow mb-3">Việc cần làm hôm nay</div>
+        <ol class="task-list">{% for t in day.tasks %}<li>{{ t }}</li>{% endfor %}</ol>
+      </div>
+      <div>
+        <div class="eyebrow mb-3">Sản phẩm kiểm tra</div>
+        <ul class="product-list mb-4">{% for p in day.products %}<li><i class="bi bi-box-seam"></i><span>{{ p }}</span></li>{% endfor %}</ul>
+        <div class="d-flex justify-content-between faint mb-2" style="font-size:.8rem;font-weight:700"><span>Tiến độ trong ngày</span><span class="tabular" data-day-progress-label></span></div>
+        <div class="bar"><span data-day-progress></span></div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="chipnav" aria-label="Các phần trong ngày">
+    {% for s in sections %}<a href="#{{ s.key }}" data-toc="{{ s.key }}" class="sk-{{ s.key }}"><i class="bi {{ s.icon }}"></i>{{ s.name }}</a>{% endfor %}
+    <a href="#finish" class="sk-finish"><i class="bi bi-flag"></i>Hoàn thành</a>
   </nav>
 
-  <div class="row g-4">
-    <aside class="col-lg-3 d-none d-lg-block">
-      <div class="toc card-x p-2">
-        <a href="#warmup" data-toc="warmup"><i class="bi bi-soundwave"></i>Khởi động<span class="mins">15'</span><i class="bi bi-check-circle-fill tick"></i></a>
-        <a href="#vocab" data-toc="vocab"><i class="bi bi-card-text"></i>Từ vựng<span class="mins">20'</span><i class="bi bi-check-circle-fill tick"></i></a>
-        <a href="#lesson" data-toc="lesson"><i class="bi bi-lightbulb"></i>Kiến thức<i class="bi bi-check-circle-fill tick"></i></a>
-        {% if has_listen %}<a href="#listening" data-toc="listening"><i class="bi bi-headphones"></i>Nghe<span class="mins">25'</span><i class="bi bi-check-circle-fill tick"></i></a>{% endif %}
-        {% if has_speak %}<a href="#speaking" data-toc="speaking"><i class="bi bi-mic"></i>Nói<span class="mins">20'</span><i class="bi bi-check-circle-fill tick"></i></a>{% endif %}
-        {% if has_read %}<a href="#reading" data-toc="reading"><i class="bi bi-book"></i>Đọc<i class="bi bi-check-circle-fill tick"></i></a>{% endif %}
-        {% if has_write %}<a href="#writing" data-toc="writing"><i class="bi bi-pencil"></i>Viết<span class="mins">10'</span><i class="bi bi-check-circle-fill tick"></i></a>{% endif %}
-        {% if day.quiz %}<a href="#quiz" data-toc="quiz"><i class="bi bi-ui-checks"></i>Bài tập<i class="bi bi-check-circle-fill tick"></i></a>{% endif %}
-        <a href="#finish"><i class="bi bi-flag"></i>Hoàn thành</a>
-        <hr class="my-2">
-        <a href="{% url 'day_practice' day.number %}"><i class="bi bi-lightning-charge"></i>Luyện thẻ từ</a>
-        <div class="d-flex gap-1 px-1 pt-1">
-          {% if prev_day %}<a class="flex-fill justify-content-center" href="{% url 'day' prev_day.number %}" title="{{ prev_day.title }}"><i class="bi bi-chevron-left"></i> Ngày {{ prev_day.number }}</a>{% endif %}
-          {% if next_day %}<a class="flex-fill justify-content-center" href="{% url 'day' next_day.number %}" title="{{ next_day.title }}">Ngày {{ next_day.number }} <i class="bi bi-chevron-right"></i></a>{% endif %}
-        </div>
-      </div>
-    </aside>
-
-    <div class="col-lg-9">
+  <div class="day-layout">
+    <div style="min-width:0">
 
       {# 1. Khởi động #}
-      <section id="warmup" class="section card-x pad mb-4" data-section="warmup">
+      <section id="warmup" class="section panel panel-pad sk-warmup" data-section="warmup">
         <div class="sec-head">
-          <span class="sec-num">1</span>
-          <div><h2>Khởi động: Shadowing</h2><div class="sub">15 phút · nghe chậm từng câu rồi nhắc lại trong khoảng lặng</div></div>
-          <button type="button" class="btn btn-ghost btn-sm sec-done" data-sec="warmup"></button>
+          <span class="icon-tile"><i class="bi bi-soundwave"></i></span>
+          <div><div class="step">Khởi động · 15 phút</div><h2>Shadowing: nghe rồi nói theo</h2></div>
+          <button type="button" class="sec-done" data-sec="warmup"></button>
         </div>
-        <p class="small muted mb-3">Bấm <b>Bắt đầu luyện</b>: máy đọc chậm từng câu, thanh màu cam chạy là lúc <b>bạn nói theo</b>. Bấm <i class="bi bi-mic"></i> để ghi âm một câu và nghe so sánh với giọng mẫu{% if day.warmup %}, <i class="bi bi-patch-check"></i> để máy chấm phát âm (Chrome/Edge){% endif %}.</p>
+        <div class="intro-note"><i class="bi bi-info-circle"></i><div>Bấm <b>Bắt đầu luyện</b>: máy đọc chậm từng câu, khi thanh màu cam chạy là <b>lượt bạn nói theo</b>. Bấm <i class="bi bi-mic"></i> để ghi âm một câu rồi nghe so sánh với giọng mẫu, <i class="bi bi-patch-check"></i> để máy chấm phát âm (Chrome/Edge).</div></div>
         {% include "learning/partials/_shadow.html" with items=day.warmup %}
       </section>
 
       {# 2. Từ vựng #}
-      <section id="vocab" class="section card-x pad mb-4" data-section="vocab">
+      <section id="vocab" class="section panel panel-pad sk-vocab" data-section="vocab">
         <div class="sec-head">
-          <span class="sec-num">2</span>
-          <div><h2>Từ vựng</h2><div class="sub">20 phút · {{ day.vocab|length }} từ/cụm từ mới</div></div>
-          <button type="button" class="btn btn-ghost btn-sm sec-done" data-sec="vocab"></button>
+          <span class="icon-tile"><i class="bi bi-card-text"></i></span>
+          <div><div class="step">Từ vựng · 20 phút</div><h2>{{ day.vocab|length }} từ và cụm từ mới</h2></div>
+          <button type="button" class="sec-done" data-sec="vocab"></button>
         </div>
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <button type="button" class="btn btn-soft btn-sm" data-act="play-vocab"><i class="bi bi-play-fill"></i> Nghe tất cả</button>
+        <div class="toolbar">
+          <button type="button" class="play-main" style="height:40px;font-size:.86rem" data-act="play-vocab"><i class="bi bi-play-fill" style="width:28px;height:28px"></i><span>Nghe tất cả</span></button>
           <button type="button" class="btn btn-ghost btn-sm" data-act="hide-meaning"><i class="bi bi-eye-slash"></i> Che nghĩa để tự kiểm tra</button>
-          <a class="btn btn-brand btn-sm ms-auto" href="{% url 'day_practice' day.number %}"><i class="bi bi-lightning-charge"></i> Luyện thẻ & bài tập từ</a>
+          <a class="btn btn-soft btn-sm ms-auto" href="{% url 'day_practice' day.number %}"><i class="bi bi-lightning-charge"></i> Luyện thẻ &amp; bài tập từ</a>
         </div>
         <div id="vocab-list">{% include "learning/partials/_vocab_cards.html" with words=day.vocab %}</div>
-        <p class="small muted mt-3 mb-0"><i class="bi bi-info-circle"></i> Bấm <b>Đánh dấu xong</b> để đưa các từ này vào lịch <a href="{% url 'review' %}">ôn tập ngắt quãng</a> (giống Anki).</p>
+        <p class="faint mt-3 mb-0" style="font-size:.84rem"><i class="bi bi-info-circle me-1"></i>Bấm <b>Đánh dấu xong</b> để đưa các từ này vào lịch <a href="{% url 'review' %}">ôn tập ngắt quãng</a>.</p>
       </section>
 
       {# 3. Kiến thức #}
-      <section id="lesson" class="section card-x pad mb-4" data-section="lesson">
+      <section id="lesson" class="section panel panel-pad sk-lesson" data-section="lesson">
         <div class="sec-head">
-          <span class="sec-num">3</span>
-          <div><h2>Kiến thức trọng tâm</h2><div class="sub">Bấm vào chữ có gạch chân để nghe</div></div>
-          <button type="button" class="btn btn-ghost btn-sm sec-done" data-sec="lesson"></button>
+          <span class="icon-tile"><i class="bi bi-lightbulb"></i></span>
+          <div><div class="step">Kiến thức trọng tâm</div><h2>{{ day.title }}</h2></div>
+          <button type="button" class="sec-done" data-sec="lesson"></button>
         </div>
         <div class="lesson">{{ day.lesson|safe }}</div>
         {% if day.phrases %}
-        <h3 class="h6 fw-800 mt-4 mb-2" style="color:var(--brand-ink)"><i class="bi bi-chat-quote"></i> Mẫu câu hữu ích</h3>
-        <div>{% for p in day.phrases %}
-          <div class="phrase">{% say p.en %}{% say p.en 'slow' %}<div><div class="en en-text">{{ p.en }}</div><div class="vi">{{ p.vi }}</div></div></div>
-        {% endfor %}</div>
+        <div class="sub-title"><i class="bi bi-chat-square-quote"></i> Mẫu câu hữu ích</div>
+        <div class="soft-box">
+          {% for p in day.phrases %}
+          <div class="phrase"><span class="btns">{% say p.en 'normal' '' 'sm' %}{% say p.en 'slow' '' 'sm' %}</span><div><div class="en">{{ p.en }}</div><div class="vi">{{ p.vi }}</div></div></div>
+          {% endfor %}
+        </div>
         {% endif %}
       </section>
 
       {# 4. Nghe #}
       {% if day.listening %}{% with lis=day.listening %}
-      <section id="listening" class="section card-x pad mb-4" data-section="listening">
+      <section id="listening" class="section panel panel-pad sk-listening" data-section="listening">
         <div class="sec-head">
-          <span class="sec-num">4</span>
-          <div><h2>Nghe: <span class="en-text">{{ lis.title }}</span></h2><div class="sub">25 phút · khoảng {{ lis.words }} từ</div></div>
-          <button type="button" class="btn btn-ghost btn-sm sec-done" data-sec="listening"></button>
+          <span class="icon-tile"><i class="bi bi-headphones"></i></span>
+          <div><div class="step">Nghe · 25 phút</div><h2>{{ lis.title }}</h2></div>
+          <button type="button" class="sec-done" data-sec="listening"></button>
         </div>
-        {% if lis.intro %}<p class="mb-2">{{ lis.intro }}</p>{% endif %}
-        <div class="note-steps small muted mb-3">
-          <b>Cách làm:</b> ① Nghe lần 1 khi lời thoại đang ẩn → ② trả lời câu hỏi → ③ hiện lời, nghe lại và đọc nghĩa → ④ chép chính tả → ⑤ đóng vai.
-        </div>
-        <div class="dialogue hide-script">
+        {% if lis.intro %}<p style="margin-bottom:14px">{{ lis.intro }}</p>{% endif %}
+        <div class="intro-note"><i class="bi bi-signpost-2"></i><div>① Nghe lần đầu khi lời còn mờ → ② trả lời câu hỏi → ③ hiện lời, nghe lại, xem nghĩa → ④ chép chính tả → ⑤ đóng vai.</div></div>
+
+        <div class="dialogue hide-script {% if lis.speakers|length < 2 %}monologue{% endif %}">
           <div class="player-bar">
-            <button type="button" class="btn btn-brand btn-sm" data-act="play"><i class="bi bi-play-fill"></i> Phát cả bài</button>
-            <label>Tốc độ <select class="form-select form-select-sm d-inline-block" data-opt="speed">
-              <option value="slower">Rất chậm</option><option value="slow">Chậm</option><option value="normal" {% if lis.speed == 'normal' %}selected{% endif %}>Bình thường</option><option value="fast" {% if lis.speed == 'fast' %}selected{% endif %}>Nhanh</option></select></label>
-            <label>Đóng vai <select class="form-select form-select-sm d-inline-block" data-opt="role">
-              <option value="">Không — chỉ nghe</option>{% for k, s in lis.speakers.items %}<option value="{{ k }}">Bạn là {{ s.name }}</option>{% endfor %}</select></label>
-            <span class="ms-auto d-flex gap-1">
-              <button type="button" class="btn btn-ghost btn-sm" data-act="script"><i class="bi bi-eye"></i> Hiện lời</button>
-              <button type="button" class="btn btn-ghost btn-sm" data-act="vi">Nghĩa</button>
-            </span>
-          </div>
-          {% for ln in lis.lines %}
-          <div class="line spk-{{ ln.speaker }}" data-text="{{ ln.en }}" data-voice="{{ ln.voice }}" data-speaker="{{ ln.speaker }}">
-            <div class="avatar">{{ ln.name|initial }}</div>
-            <div class="flex-grow-1">
-              <div class="name">{{ ln.name }} <span class="turn-label ms-1"><i class="bi bi-mic-fill"></i> Lượt của bạn — nói câu này!</span></div>
-              <div class="en en-text">{{ ln.en }}</div>
-              <div class="vi">{{ ln.vi }}</div>
-              <div class="turn-bar"><span></span></div>
+            <button type="button" class="play-main" data-act="play"><i class="bi bi-play-fill"></i><span>Phát cả bài</span></button>
+            <div class="ctrl"><span class="ctrl-label">Tốc độ</span>
+              <div class="seg" data-opt="speed" data-value="{{ lis.speed }}"><button type="button" data-v="slower">Rất chậm</button><button type="button" data-v="slow">Chậm</button><button type="button" data-v="normal">Thường</button><button type="button" data-v="fast">Nhanh</button></div></div>
+            {% if lis.speakers|length > 1 %}
+            <div class="ctrl"><span class="ctrl-label">Đóng vai</span>
+              <div class="seg" data-opt="role" data-value=""><button type="button" data-v="">Chỉ nghe</button>{% for k, s in lis.speakers.items %}<button type="button" data-v="{{ k }}">Tôi là {{ s.name }}</button>{% endfor %}</div></div>
+            {% endif %}
+            <div class="tail">
+              <button type="button" class="btn btn-quiet btn-sm" data-act="script"><i class="bi bi-eye"></i> Hiện lời</button>
+              <button type="button" class="btn btn-quiet btn-sm" data-act="vi"><i class="bi bi-translate"></i> Nghĩa</button>
             </div>
           </div>
-          {% endfor %}
+          <div class="chat">
+            {% for ln in lis.lines %}
+            <div class="line spk-{{ ln.speaker }} {% if ln.speaker == 'B' and lis.speakers|length > 1 %}right{% endif %}" data-text="{{ ln.en }}" data-voice="{{ ln.voice }}" data-speaker="{{ ln.speaker }}">
+              <div class="avatar">{{ ln.name|initial }}</div>
+              <div class="bubble">
+                <div class="name">{{ ln.name }} <span class="turn-label"><i class="bi bi-mic-fill"></i> Lượt của bạn</span></div>
+                <div class="en">{{ ln.en }}</div>
+                <div class="vi">{{ ln.vi }}</div>
+                <div class="turn-bar"><span></span></div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
 
         {% if lis.questions %}
-        <h3 class="h6 fw-800 mt-4 mb-1">Câu hỏi nghe hiểu</h3>
+        <div class="sub-title"><i class="bi bi-patch-question"></i> Câu hỏi nghe hiểu</div>
         {% include "learning/partials/_quiz.html" with questions=lis.questions key=key_prefix|add:"-listening" %}
         {% endif %}
 
         {% if day.dictation %}
-        <h3 class="h6 fw-800 mt-4 mb-1">Chép chính tả</h3>
-        <p class="small muted mb-2">Nghe từng câu (bấm <i class="bi bi-hourglass-split"></i> để nghe rất chậm), gõ lại rồi nhấn Enter để chấm.</p>
+        <div class="sub-title"><i class="bi bi-keyboard"></i> Chép chính tả</div>
+        <p class="faint" style="font-size:.86rem">Nghe từng câu (<i class="bi bi-hourglass-split"></i> để nghe rất chậm), gõ lại rồi nhấn Enter để chấm.</p>
         <div class="dictation" data-speed="{{ day.dictation_speed }}">
           {% for s in day.dictation %}
           <div class="dict-item" data-text="{{ s }}">
-            <button type="button" class="say-btn" data-act="play" title="Nghe"><i class="bi bi-volume-up"></i></button>
-            <button type="button" class="say-btn slow" data-act="slow" title="Nghe rất chậm"><i class="bi bi-hourglass-split"></i></button>
-            <div class="flex-grow-1">
-              <div class="d-flex gap-2"><input class="form-control form-control-sm en-text" placeholder="Câu {{ forloop.counter }}: gõ những gì bạn nghe…" autocomplete="off" spellcheck="false"><button type="button" class="btn btn-soft btn-sm" data-act="check">Chấm</button></div>
+            <button type="button" class="say-btn" data-act="play" title="Nghe" aria-label="Nghe câu {{ forloop.counter }}"><i class="bi bi-volume-up"></i></button>
+            <button type="button" class="say-btn slow" data-act="slow" title="Nghe rất chậm" aria-label="Nghe chậm câu {{ forloop.counter }}"><i class="bi bi-hourglass-split"></i></button>
+            <div class="flex-grow-1" style="min-width:0">
+              <div class="d-flex gap-2"><input class="form-control" placeholder="Câu {{ forloop.counter }}: gõ những gì bạn nghe…" autocomplete="off" spellcheck="false" lang="en"><button type="button" class="btn btn-soft" data-act="check">Chấm</button></div>
               <div class="dict-diff"></div>
             </div>
           </div>
@@ -175,75 +171,66 @@
 
       {# 5. Nói #}
       {% if day.speaking %}{% with spk=day.speaking %}
-      <section id="speaking" class="section card-x pad mb-4" data-section="speaking">
+      <section id="speaking" class="section panel panel-pad sk-speaking" data-section="speaking">
         <div class="sec-head">
-          <span class="sec-num">5</span>
-          <div><h2>Nói</h2><div class="sub">20 phút · ghi âm khoảng {{ spk.seconds }} giây rồi nghe lại</div></div>
-          <button type="button" class="btn btn-ghost btn-sm sec-done" data-sec="speaking"></button>
+          <span class="icon-tile"><i class="bi bi-mic"></i></span>
+          <div><div class="step">Nói · 20 phút</div><h2>Luyện nói và ghi âm</h2></div>
+          <button type="button" class="sec-done" data-sec="speaking"></button>
         </div>
-        {% if spk.tips %}<ul class="small mb-3">{% for t in spk.tips %}<li>{{ t }}</li>{% endfor %}</ul>{% endif %}
+        {% if spk.tips %}<ul class="tip-list">{% for t in spk.tips %}<li>{{ t }}</li>{% endfor %}</ul>{% endif %}
 
-        <div class="small-caps mb-2">Câu hỏi / nhiệm vụ</div>
+        <div class="eyebrow mb-1">Câu hỏi / nhiệm vụ</div>
+        <div class="mb-3">
         {% for p in spk.prompts %}
-        <div class="phrase">{% say p.en %}<div><div class="en en-text">{{ p.en }}</div><div class="vi">{{ p.vi }}</div></div></div>
+          <div class="phrase"><span class="btns">{% say p.en %}</span><div><div class="en">{{ p.en }}</div><div class="vi">{{ p.vi }}</div></div></div>
         {% endfor %}
+        </div>
 
-        <div class="recorder mt-3" data-key="day-{{ day.number }}-speaking" data-day="{{ day.number }}" data-week="{{ day.week }}" data-label="Ngày {{ day.number }} · {{ day.title }}" data-seconds="{{ spk.seconds }}"></div>
+        <div class="recorder" data-key="day-{{ day.number }}-speaking" data-day="{{ day.number }}" data-week="{{ day.week }}" data-label="Ngày {{ day.number }} · {{ day.title }}" data-seconds="{{ spk.seconds }}"></div>
 
         {% if day.rubric %}
-        <div class="rubric soft p-3 mt-3" data-key="day-{{ day.number }}">
-          <div class="fw-700 mb-1"><i class="bi bi-clipboard-check"></i> Tự chấm bản ghi âm (1–5)</div>
-          <div class="small muted mb-2">Nghe lại bản ghi và chấm thật lòng. Bảng điểm được lưu để so sánh ở tuần 12.</div>
+        <div class="rubric soft-box mt-3" data-key="day-{{ day.number }}">
+          <div class="fw-800 mb-1"><i class="bi bi-clipboard-check me-1" style="color:var(--c)"></i> Tự chấm bản ghi âm (1–5)</div>
+          <div class="faint mb-2" style="font-size:.86rem">Nghe lại và chấm thật lòng. Điểm được lưu để so sánh ở tuần 12.</div>
           <div class="rubric-row"><span class="lbl">Trôi chảy</span><span class="rate" data-field="fluency">{% for i in "12345" %}<button type="button" data-v="{{ i }}">{{ i }}</button>{% endfor %}</span></div>
           <div class="rubric-row"><span class="lbl">Từ vựng</span><span class="rate" data-field="vocab">{% for i in "12345" %}<button type="button" data-v="{{ i }}">{{ i }}</button>{% endfor %}</span></div>
           <div class="rubric-row"><span class="lbl">Ngữ pháp</span><span class="rate" data-field="grammar">{% for i in "12345" %}<button type="button" data-v="{{ i }}">{{ i }}</button>{% endfor %}</span></div>
           <div class="rubric-row"><span class="lbl">Phát âm</span><span class="rate" data-field="pron">{% for i in "12345" %}<button type="button" data-v="{{ i }}">{{ i }}</button>{% endfor %}</span></div>
-          <div class="rubric-avg fw-700 mt-1"></div>
+          <div class="rubric-avg fw-800 mt-1"></div>
         </div>
         {% endif %}
 
-        {% if spk.model_sentences %}
-        <h3 class="h6 fw-800 mt-4 mb-1">Bài nói mẫu — shadow từng câu</h3>
-        <p class="small muted mb-2">Nghe cả bài <button type="button" class="say-btn sm" data-say="{{ spk.model_en }}" title="Nghe cả bài"><i class="bi bi-volume-up"></i></button> <button type="button" class="say-btn sm slow" data-say="{{ spk.model_en }}" data-speed="slow" title="Nghe chậm"><i class="bi bi-hourglass-split"></i></button>, rồi luyện từng câu bên dưới. Sau đó tự nói lại bằng câu chuyện <b>của bạn</b>.</p>
-        <div class="shadow-player">
-          <div class="player-bar">
-            <button type="button" class="btn btn-brand btn-sm" data-act="play"><i class="bi bi-play-fill"></i> Bắt đầu luyện</button>
-            <label>Tốc độ <select class="form-select form-select-sm d-inline-block" data-opt="speed"><option value="slower">Rất chậm</option><option value="slow">Chậm</option><option value="normal">Bình thường</option></select></label>
-            <label>Lặp <select class="form-select form-select-sm d-inline-block" data-opt="reps"><option value="1" selected>1 lần</option><option value="2">2 lần</option><option value="3">3 lần</option></select></label>
-            <label>Khoảng lặng <select class="form-select form-select-sm d-inline-block" data-opt="pause"><option value="0">Không</option><option value="1">Vừa</option><option value="1.4" selected>Thoải mái</option><option value="2">Dài</option></select></label>
-            <span class="ms-auto d-flex gap-1"><button type="button" class="btn btn-ghost btn-sm" data-act="hide-text">Ẩn chữ</button></span>
-          </div>
-          {% for s in spk.model_sentences %}
-          <div class="shadow-item" data-text="{{ s }}">
-            <div class="idx">{{ forloop.counter }}</div>
-            <div class="flex-grow-1"><div class="en en-text">{{ s }}</div><span class="turn-label"><i class="bi bi-mic-fill"></i> Đến lượt bạn!</span><div class="turn-bar"><span></span></div><div class="pron-result"></div></div>
-            <div class="tools"></div>
-          </div>
-          {% endfor %}
+        {% if spk.model_items %}
+        <div class="sub-title"><i class="bi bi-person-video3"></i> Bài nói mẫu — shadow từng câu</div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <button type="button" class="btn btn-ghost btn-sm" data-say="{{ spk.model_en }}"><i class="bi bi-volume-up"></i> Nghe cả bài</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-say="{{ spk.model_en }}" data-speed="slow"><i class="bi bi-hourglass-split"></i> Nghe chậm</button>
+          <span class="faint" style="font-size:.84rem">Sau đó tự kể lại bằng câu chuyện <b>của bạn</b>.</span>
         </div>
-        <details class="mt-2"><summary class="small fw-600" style="cursor:pointer">Xem bản dịch bài nói mẫu</summary><p class="small muted mt-2 mb-0">{{ spk.model_vi }}</p></details>
+        {% include "learning/partials/_shadow.html" with items=spk.model_items reps="1" playlabel="Luyện bài mẫu" %}
+        <details class="more mt-3"><summary>Xem bản dịch bài nói mẫu</summary><div class="muted" style="font-size:.92rem">{{ spk.model_vi }}</div></details>
         {% endif %}
       </section>
       {% endwith %}{% endif %}
 
       {# 6. Đọc #}
       {% if day.reading %}{% with rd=day.reading %}
-      <section id="reading" class="section card-x pad mb-4" data-section="reading">
+      <section id="reading" class="section panel panel-pad sk-reading" data-section="reading">
         <div class="sec-head">
-          <span class="sec-num">6</span>
-          <div><h2>Đọc: <span class="en-text">{{ rd.title }}</span></h2><div class="sub">{{ rd.words }} từ · đọc thầm 1 lần, đọc to 1 lần</div></div>
-          <button type="button" class="btn btn-ghost btn-sm sec-done" data-sec="reading"></button>
+          <span class="icon-tile"><i class="bi bi-book"></i></span>
+          <div><div class="step">Đọc · {{ rd.words }} từ</div><h2>{{ rd.title }}</h2></div>
+          <button type="button" class="sec-done" data-sec="reading"></button>
         </div>
-        <div class="d-flex gap-2 mb-3">
-          <button type="button" class="btn btn-soft btn-sm" data-say="{{ rd.text|join:' ' }}"><i class="bi bi-volume-up"></i> Nghe cả bài</button>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          <button type="button" class="btn btn-ghost btn-sm" data-say="{{ rd.text|join:' ' }}"><i class="bi bi-volume-up"></i> Nghe cả bài</button>
           <button type="button" class="btn btn-ghost btn-sm" data-say="{{ rd.text|join:' ' }}" data-speed="slow"><i class="bi bi-hourglass-split"></i> Nghe chậm</button>
         </div>
-        <div class="en-text" style="font-size:1.05rem;line-height:1.8">
-          {% for p in rd.text %}<p class="d-flex gap-2">{% say p %}<span>{{ p }}</span></p>{% endfor %}
+        <div class="article">
+          {% for p in rd.text %}<p>{% say p 'normal' '' 'sm' %}<span>{{ p }}</span></p>{% endfor %}
         </div>
-        {% if rd.vi %}<details class="mb-2"><summary class="small fw-600" style="cursor:pointer">Tóm tắt / dịch tiếng Việt</summary><p class="small muted mt-2 mb-0">{{ rd.vi }}</p></details>{% endif %}
+        {% if rd.vi %}<details class="more mb-2"><summary>Tóm tắt tiếng Việt</summary><div class="muted" style="font-size:.92rem">{{ rd.vi }}</div></details>{% endif %}
         {% if rd.questions %}
-        <h3 class="h6 fw-800 mt-3 mb-1">Câu hỏi đọc hiểu</h3>
+        <div class="sub-title"><i class="bi bi-patch-question"></i> Câu hỏi đọc hiểu</div>
         {% include "learning/partials/_quiz.html" with questions=rd.questions key=key_prefix|add:"-reading" %}
         {% endif %}
       </section>
@@ -251,27 +238,30 @@
 
       {# 7. Viết #}
       {% if day.writing %}{% with wr=day.writing %}
-      <section id="writing" class="section card-x pad mb-4" data-section="writing">
+      <section id="writing" class="section panel panel-pad sk-writing" data-section="writing">
         <div class="sec-head">
-          <span class="sec-num">7</span>
-          <div><h2>Viết</h2><div class="sub">10 phút · bài viết tự lưu trong trình duyệt</div></div>
-          <button type="button" class="btn btn-ghost btn-sm sec-done" data-sec="writing"></button>
+          <span class="icon-tile"><i class="bi bi-pencil"></i></span>
+          <div><div class="step">Viết · 10 phút</div><h2>Bài viết hôm nay</h2></div>
+          <button type="button" class="sec-done" data-sec="writing"></button>
         </div>
-        <p class="fw-600 mb-2">{{ wr.task }}</p>
-        {% if wr.tips %}<ul class="small muted">{% for t in wr.tips %}<li>{{ t }}</li>{% endfor %}</ul>{% endif %}
+        <div class="task-box"><i class="bi bi-pencil-square"></i><div>{{ wr.task }}</div></div>
+        {% if wr.tips %}<ul class="tip-list">{% for t in wr.tips %}<li>{{ t }}</li>{% endfor %}</ul>{% endif %}
         <div class="writing" data-key="day-{{ day.number }}" data-min="{{ wr.min_words }}">
-          <textarea class="form-control en-text" placeholder="Viết bằng tiếng Anh ở đây…" spellcheck="true" lang="en"></textarea>
-          <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
-            <span class="wc small muted"></span><span class="saved small text-success"></span>
-            <span class="ms-auto d-flex gap-2">
-              <button type="button" class="btn btn-ghost btn-sm" data-act="listen-mine"><i class="bi bi-volume-up"></i> Nghe bài của tôi</button>
-              {% if wr.model %}<button type="button" class="btn btn-soft btn-sm" data-act="model"><i class="bi bi-file-earmark-text"></i> Bài mẫu</button>{% endif %}
-            </span>
+          <div class="paper">
+            <textarea placeholder="Viết bằng tiếng Anh ở đây… (tự động lưu)" spellcheck="true" lang="en"></textarea>
+            <div class="paper-foot">
+              <div class="bar thin"><span data-wc-bar></span></div>
+              <span class="wc faint fw-700" style="font-size:.8rem"></span><span class="saved" style="font-size:.8rem;color:var(--ok);font-weight:700"></span>
+              <span class="ms-auto d-flex gap-2">
+                <button type="button" class="btn btn-quiet btn-sm" data-act="listen-mine"><i class="bi bi-volume-up"></i> Nghe bài của tôi</button>
+                {% if wr.model %}<button type="button" class="btn btn-soft btn-sm" data-act="model"><i class="bi bi-file-earmark-text"></i> Bài mẫu</button>{% endif %}
+              </span>
+            </div>
           </div>
           {% if wr.model %}
           <div class="model-wrap hidden mt-3">
-            <div class="d-flex align-items-center gap-2 mb-2"><span class="small-caps">Bài mẫu</span>{% say wr.model %}{% say wr.model 'slow' %}</div>
-            <div class="model-box en-text">{{ wr.model }}</div>
+            <div class="d-flex align-items-center gap-2 mb-2"><span class="eyebrow">Bài mẫu</span>{% say wr.model 'normal' '' 'sm' %}{% say wr.model 'slow' '' 'sm' %}</div>
+            <div class="model-box">{{ wr.model }}</div>
           </div>
           {% endif %}
         </div>
@@ -280,34 +270,53 @@
 
       {# 8. Bài tập #}
       {% if day.quiz %}
-      <section id="quiz" class="section card-x pad mb-4" data-section="quiz">
+      <section id="quiz" class="section panel panel-pad sk-quiz" data-section="quiz">
         <div class="sec-head">
-          <span class="sec-num">8</span>
-          <div><h2>Bài tập</h2><div class="sub">{{ day.quiz|length }} câu · chọn đáp án để xem giải thích ngay</div></div>
-          <button type="button" class="btn btn-ghost btn-sm sec-done" data-sec="quiz"></button>
+          <span class="icon-tile"><i class="bi bi-ui-checks"></i></span>
+          <div><div class="step">Bài tập · {{ day.quiz|length }} câu</div><h2>Kiểm tra nhanh</h2></div>
+          <button type="button" class="sec-done" data-sec="quiz"></button>
         </div>
         {% include "learning/partials/_quiz.html" with questions=day.quiz key=key_prefix|add:"-quiz" qday=day.number qsection="quiz" %}
       </section>
       {% endif %}
 
       {# 9. Hoàn thành #}
-      <section id="finish" class="section card-x pad mb-4">
-        <div class="sec-head"><span class="sec-num"><i class="bi bi-flag-fill"></i></span><div><h2>Sản phẩm & hoàn thành</h2><div class="sub">Tự kiểm tra trước khi qua ngày mới</div></div></div>
+      <section id="finish" class="section panel panel-pad sk-finish">
+        <div class="sec-head">
+          <span class="icon-tile"><i class="bi bi-flag"></i></span>
+          <div><div class="step">Tổng kết</div><h2>Sản phẩm &amp; hoàn thành ngày</h2></div>
+        </div>
         <div class="checklist products mb-3">
           {% for p in day.products %}<label><input type="checkbox" data-i="{{ forloop.counter0 }}"><span>{{ p }}</span></label>{% endfor %}
         </div>
-        <label class="small fw-600 mb-1" for="day-notes">Ghi chú của bạn (lỗi hay mắc, từ khó, cảm nhận…)</label>
-        <textarea id="day-notes" class="form-control mb-3" rows="3" placeholder="Ví dụ: hay quên -s ở ngôi thứ ba; nói 'live' thành 'leave'…"></textarea>
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-          <button id="finish-day" type="button" class="btn btn-brand"></button>
-          {% if next_day %}<a class="btn btn-ghost ms-auto" href="{% url 'day' next_day.number %}">Ngày {{ next_day.number }}: {{ next_day.title }} <i class="bi bi-arrow-right"></i></a>{% endif %}
+        <label class="fw-700 mb-2" for="day-notes" style="font-size:.9rem">Ghi chú của bạn</label>
+        <textarea id="day-notes" class="form-control mb-4" rows="3" placeholder="Lỗi hay mắc, từ khó, cảm nhận… Ví dụ: hay quên -s ở ngôi thứ ba."></textarea>
+        <div class="finish-box">
+          <div class="flex-grow-1" style="min-width:200px">
+            <div class="fw-800">Xong buổi học hôm nay?</div>
+            <div class="faint" style="font-size:.86rem">Từ vựng sẽ vào lịch ôn, ngày này được đánh dấu trên lộ trình.</div>
+          </div>
+          <button id="finish-day" type="button" class="btn btn-brand btn-lg"></button>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          {% if next_day %}<a class="btn btn-ghost" href="{% url 'day' next_day.number %}">Ngày {{ next_day.number }}: {{ next_day.title }} <i class="bi bi-arrow-right"></i></a>{% endif %}
           {% if day.index == 5 %}<a class="btn btn-soft" href="{% url 'week_review' week.number %}"><i class="bi bi-cup-hot"></i> Chủ nhật: ôn tuần {{ week.number }}</a>{% endif %}
         </div>
       </section>
-
     </div>
+
+    <aside class="outline">
+      <div class="eyebrow mb-2 px-2">Nội dung buổi học</div>
+      {% for s in sections %}<a href="#{{ s.key }}" data-toc="{{ s.key }}" class="sk-{{ s.key }}"><span class="icon-tile"><i class="bi {{ s.icon }}"></i></span>{{ s.name }}{% if s.mins %}<span class="mins">{{ s.mins }}'</span>{% endif %}<i class="bi bi-check-circle-fill tick"></i></a>{% endfor %}
+      <a href="#finish" class="sk-finish"><span class="icon-tile"><i class="bi bi-flag"></i></span>Hoàn thành</a>
+      <div class="bar thin mx-2 my-3"><span data-day-progress></span></div>
+      <a href="{% url 'day_practice' day.number %}" class="btn btn-soft btn-sm w-100 mb-2"><i class="bi bi-lightning-charge"></i> Luyện thẻ từ</a>
+      <div class="d-flex gap-2">
+        {% if prev_day %}<a class="btn btn-ghost btn-sm flex-fill" href="{% url 'day' prev_day.number %}"><i class="bi bi-arrow-left"></i> Ngày {{ prev_day.number }}</a>{% endif %}
+        {% if next_day %}<a class="btn btn-ghost btn-sm flex-fill" href="{% url 'day' next_day.number %}">Ngày {{ next_day.number }} <i class="bi bi-arrow-right"></i></a>{% endif %}
+      </div>
+    </aside>
   </div>
-  {% endwith %}
 </div>
 {% endblock %}
 

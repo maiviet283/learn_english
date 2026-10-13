@@ -1,23 +1,28 @@
 {% extends "learning/base.html" %}
-{% block title %}Bản ghi âm của tôi · {{ SITE_NAME }}{% endblock %}
+{% block title %}Bản ghi âm · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div id="recordings">
-  <h1 class="h3 fw-800 mb-1">Bản ghi âm của tôi</h1>
-  <p class="muted mb-4">Mọi bản ghi được lưu ngay trong trình duyệt này (không tải lên máy chủ). Nghe lại bản tuần 1 và tuần 12 để thấy mình tiến bộ thế nào. Muốn giữ lâu dài, hãy bấm <i class="bi bi-download"></i> để tải về.</p>
-
-  <div id="cmp-wrap" class="card-x pad mb-4 hidden">
-    <h2 class="h6 fw-800 mb-2"><i class="bi bi-arrow-left-right"></i> So sánh 2 bản ghi</h2>
-    <div class="row g-2 align-items-center">
-      <div class="col-md-5"><select id="cmp-a" class="form-select form-select-sm"></select></div>
-      <div class="col-md-5"><select id="cmp-b" class="form-select form-select-sm"></select></div>
-      <div class="col-md-2"><button id="cmp-play" type="button" class="btn btn-brand btn-sm w-100"><i class="bi bi-play-fill"></i> Phát lần lượt</button></div>
+<div class="page page-narrow" id="recordings">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Lưu trong trình duyệt này</div>
+      <h1>Bản ghi âm của tôi</h1>
+      <p>Nghe lại bản tuần 1 và tuần 12 để thấy mình tiến bộ thế nào. Bản ghi không tải lên máy chủ — muốn giữ lâu dài hãy bấm <i class="bi bi-download"></i> để tải về.</p>
     </div>
   </div>
 
-  <div class="card-x pad mb-4">
-    <h2 class="h6 fw-800 mb-2"><i class="bi bi-clipboard-check"></i> Lịch sử tự chấm 4 tiêu chí</h2>
-    <div class="table-responsive"><table class="table table-sm mb-0" style="--bs-table-bg:transparent">
+  <div id="cmp-wrap" class="panel panel-pad mb-4 hidden sk-speaking">
+    <div class="panel-head"><span class="icon-tile sm"><i class="bi bi-arrow-left-right"></i></span><div><h2>So sánh 2 bản ghi</h2><div class="sub">Phát bản A rồi bản B</div></div></div>
+    <div class="row g-2">
+      <div class="col-md"><label class="ctrl-label" for="cmp-a">Bản A</label><select id="cmp-a" class="form-select"></select></div>
+      <div class="col-md"><label class="ctrl-label" for="cmp-b">Bản B</label><select id="cmp-b" class="form-select"></select></div>
+      <div class="col-md-auto d-flex align-items-end"><button id="cmp-play" type="button" class="play-main"><i class="bi bi-play-fill"></i><span>Phát lần lượt</span></button></div>
+    </div>
+  </div>
+
+  <div class="panel panel-pad mb-4">
+    <div class="panel-head"><span class="icon-tile sm sk-quiz"><i class="bi bi-clipboard-check"></i></span><div><h2>Lịch sử tự chấm 4 tiêu chí</h2><div class="sub">Trôi chảy · Từ vựng · Ngữ pháp · Phát âm</div></div></div>
+    <div class="table-responsive"><table class="table-x">
       <thead><tr><th>Bài</th><th>Trôi chảy</th><th>Từ vựng</th><th>Ngữ pháp</th><th>Phát âm</th><th>Lúc</th></tr></thead>
       <tbody id="rubric-history"></tbody>
     </table></div>

@@ -3,18 +3,27 @@
 {% block title %}Mẫu câu giao tiếp · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<h1 class="h3 fw-800 mb-1">Mẫu câu giao tiếp</h1>
-<p class="muted mb-4">Tất cả mẫu câu hữu ích trong lộ trình — từ giới thiệu bản thân, standup, code review đến phỏng vấn và thuyết trình. Bấm <i class="bi bi-volume-up"></i> để nghe, <i class="bi bi-hourglass-split"></i> để nghe chậm.</p>
-<div class="row g-3">
-{% for d, items in groups %}
-  <div class="col-lg-6">
-    <div class="card-x pad h-100">
-      <div class="d-flex align-items-center gap-2 mb-2"><span class="chip">Ngày {{ d.number }}</span><a class="fw-800 text-decoration-none" href="{% url 'day' d.number %}">{{ d.title }}</a></div>
-      {% for p in items %}
-      <div class="phrase">{% say p.en %}{% say p.en 'slow' %}<div><div class="en en-text">{{ p.en }}</div><div class="vi">{{ p.vi }}</div></div></div>
-      {% endfor %}
+<div class="page" id="phrase-bank">
+  <div class="page-head" style="margin-bottom:6px">
+    <div>
+      <div class="eyebrow">Giao tiếp công việc</div>
+      <h1>Mẫu câu</h1>
+      <p>Từ giới thiệu bản thân, standup, code review đến phỏng vấn và thuyết trình. Bấm <i class="bi bi-volume-up"></i> để nghe, <i class="bi bi-hourglass-split"></i> để nghe chậm.</p>
     </div>
   </div>
-{% endfor %}
+  <div class="sticky-tools"><div class="search-box"><i class="bi bi-search"></i><input id="phrase-search" class="form-control" placeholder="Tìm mẫu câu tiếng Anh hoặc tiếng Việt…" type="search" autocomplete="off"></div></div>
+  <div class="empty hidden" id="phrase-empty"><div class="emoji">🔎</div>Không tìm thấy mẫu câu nào.</div>
+  <div class="row g-3">
+  {% for d, items in groups %}
+    <div class="col-lg-6 phrase-group">
+      <div class="panel panel-pad h-100">
+        <a href="{% url 'day' d.number %}" class="d-flex align-items-center gap-2 mb-2" style="color:var(--ink)"><span class="chip brand">Ngày {{ d.number }}</span><span class="fw-800">{{ d.title }}</span><i class="bi bi-arrow-up-right ms-auto faint"></i></a>
+        {% for p in items %}
+        <div class="phrase" data-search="{{ p.en|lower }} {{ p.vi|lower }}"><span class="btns">{% say p.en 'normal' '' 'sm' %}{% say p.en 'slow' '' 'sm' %}</span><div><div class="en">{{ p.en }}</div><div class="vi">{{ p.vi }}</div></div></div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+  </div>
 </div>
 {% endblock %}

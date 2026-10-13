@@ -29,6 +29,13 @@ Không có migrate/makemigrations — `DATABASES = {}`.
 - Templates trong `learning/templates/learning/` kế thừa `base.html`; partials ở `partials/` (`_quiz`, `_shadow`, `_vocab_cards`, `_practice`). Thẻ `{% say text 'slow' %}` (templatetags/learning_tags.py) tạo nút phát âm. Trong HTML bài học: `.say` = chữ bấm nghe được, `.ex/.fix` có `.en` sẽ được JS gắn nút loa.
 - Trang: `/` · `/hom-nay/` · `/lo-trinh/` · `/tuan/<n>/` · `/tuan/<n>/on-tap/` (Chủ nhật) · `/ngay/<n>/` · `/ngay/<n>/luyen-tu/` · `/on-tap/` (SRS) · `/tu-vung/` · `/mau-cau/` · `/ghi-am/` · `/cai-dat/`.
 
+## UI / design system
+
+- `app.css` là design system riêng; Bootstrap 5.3 chỉ dùng grid + utility, Bootstrap Icons cho icon. Font: Be Vietnam Pro (UI), Lora (bài đọc). Màu là token trên `:root` (`--brand`, `--ink`, `--surface`…), dark mode qua `[data-bs-theme="dark"]`; mỗi kỹ năng có màu riêng qua class `sk-<key>` (đặt biến `--c`).
+- Khung app: sidebar cố định (≥1100px), topbar + tabbar nổi ở dưới (<1100px). Trang ngày học có mục lục bên phải (≥1360px) hoặc thanh chip dính (nhỏ hơn).
+- Bộ chọn dạng nút là `.seg[data-value] > button[data-v]` (JS `Seg`, phát sự kiện `seg:change`), không dùng `<select>`. Vòng tiến độ `.ring` nhận `--p` (0–100). JS tô số liệu qua các hook `data-*` (`data-streak`, `data-done-count`, `data-overall-ring`, `data-day-ring`, `data-heatmap`…).
+- `ASSET_VERSION` (hash app.css + app.js) chỉ tính khi khởi động — sửa CSS/JS xong phải restart server để trình duyệt lấy bản mới.
+
 ## Deploy
 
 `build.sh` (pip install + collectstatic + check) và `start.sh` (gunicorn gthread 2×8). `render.yaml` là Blueprint (có `domains: english.vietdon.vn`). Ổ đĩa Render free không bền — chỉ chứa cache âm thanh, không có dữ liệu người dùng.

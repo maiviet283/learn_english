@@ -1,19 +1,34 @@
 {% extends "learning/base.html" %}
+{% load learning_tags %}
 {% block title %}Kho từ vựng · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div id="vocab-bank">
-  <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
-    <div><h1 class="h3 fw-800 mb-1">Kho từ vựng</h1><p class="muted mb-0">{{ total }} từ và cụm từ của cả lộ trình, mỗi từ có âm thanh và ví dụ.</p></div>
-    <input id="vocab-search" class="form-control ms-auto" style="max-width:320px" placeholder="Tìm từ hoặc nghĩa…" type="search">
+<div class="page" id="vocab-bank">
+  <div class="page-head" style="margin-bottom:6px">
+    <div>
+      <div class="eyebrow">{{ total }} từ &amp; cụm từ</div>
+      <h1>Kho từ vựng</h1>
+      <p>Toàn bộ từ vựng của lộ trình, có phát âm (thường <i class="bi bi-volume-up"></i> và chậm <i class="bi bi-hourglass-split"></i>) và câu ví dụ. Từ đã thuộc lâu được đánh dấu xanh.</p>
+    </div>
   </div>
+  <div class="sticky-tools">
+    <div class="search-box mb-2"><i class="bi bi-search"></i><input id="vocab-search" class="form-control" placeholder="Tìm từ tiếng Anh hoặc nghĩa tiếng Việt…" type="search" autocomplete="off"><span class="chip sm tabular" id="vocab-count">{{ total }}</span></div>
+    <div class="filter-chips" id="week-filter"><button type="button" class="on" data-week="">Tất cả</button>{% for w in weeks %}<button type="button" data-week="{{ w.number }}">Tuần {{ w.number }}</button>{% endfor %}</div>
+  </div>
+  <div class="empty hidden" id="vocab-empty"><div class="emoji">🔎</div>Không tìm thấy từ nào.</div>
   {% for w in weeks %}
-  <div class="week-block mb-4">
-    <h2 class="h5 fw-800 mb-3"><span class="week-num">Tuần {{ w.number }}</span> · {{ w.title }}</h2>
+  <div class="week-block" data-week="{{ w.number }}">
+    <div class="group-title"><span class="chip brand">Tuần {{ w.number }}</span><h2>{{ w.title }}</h2></div>
     {% for d in w.days %}
-    <div class="week-block mb-3">
-      <div class="small fw-700 mb-2"><a href="{% url 'day' d.number %}" class="text-decoration-none">Ngày {{ d.number }} · {{ d.title }}</a></div>
-      {% include "learning/partials/_vocab_cards.html" with words=d.vocab %}
+    <div class="panel day-block mb-3" style="padding:8px 16px">
+      <a href="{% url 'day' d.number %}" class="day-block-head" data-day-status="{{ d.number }}"><span class="status-dot"><span>{{ d.number }}</span></span><span class="flex-grow-1">{{ d.title }}</span><i class="bi bi-arrow-up-right faint"></i></a>
+      {% for v in d.vocab %}
+      <div class="vrow" data-word="{{ v.word }}" data-search="{{ v.word|lower }} {{ v.vi|lower }}">
+        <span class="btns">{% say v.word 'normal' '' 'sm' %}{% say v.word 'slow' '' 'sm' %}</span>
+        <div style="min-width:0"><div class="d-flex align-items-center gap-2 flex-wrap"><span class="word">{{ v.word }}</span><span class="chip ok sm known hidden"><i class="bi bi-check2"></i> Đã thuộc</span></div><div class="ipa">{{ v.ipa }} · <span class="pos">{{ v.pos }}</span></div></div>
+        <div class="vrow-ex" style="min-width:0"><div class="mean">{{ v.vi }}</div><div class="ex">{{ v.ex }}</div></div>
+      </div>
+      {% endfor %}
     </div>
     {% endfor %}
   </div>

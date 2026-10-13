@@ -1,18 +1,23 @@
 {% extends "learning/base.html" %}
-{% block title %}Ôn từ vựng ngắt quãng · {{ SITE_NAME }}{% endblock %}
+{% block title %}Ôn từ vựng · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div id="review">
-  <h1 class="h3 fw-800 mb-1">Ôn từ vựng</h1>
-  <p class="muted mb-3">Lặp lại ngắt quãng như Anki: nhớ rõ thì thẻ quay lại sau 1, 3, 7, 14, 30, 60 ngày; quên thì ôn lại ngay trong phiên.</p>
-  <div class="row g-3 mb-3">
-    <div class="col-6 col-md-3"><div class="card-x pad stat"><div class="stat-icon amber"><i class="bi bi-alarm"></i></div><div><div class="stat-value" id="srs-due">0</div><div class="stat-label">Cần ôn hôm nay</div></div></div></div>
-    <div class="col-6 col-md-3"><div class="card-x pad stat"><div class="stat-icon"><i class="bi bi-check2-all"></i></div><div><div class="stat-value" id="srs-done">0</div><div class="stat-label">Đã ôn phiên này</div></div></div></div>
-    <div class="col-6 col-md-3"><div class="card-x pad stat"><div class="stat-icon"><i class="bi bi-collection"></i></div><div><div class="stat-value" id="srs-total">0</div><div class="stat-label">Tổng số từ</div></div></div></div>
-    <div class="col-6 col-md-3"><div class="card-x pad stat"><div class="stat-icon"><i class="bi bi-award"></i></div><div><div class="stat-value" id="srs-mastered">0</div><div class="stat-label">Đã thuộc lâu</div></div></div></div>
+<div class="page page-narrow" id="review">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Lặp lại ngắt quãng</div>
+      <h1>Ôn từ vựng</h1>
+      <p>Nhớ rõ thì thẻ quay lại sau 1, 3, 7, 14, 30, 60 ngày; quên thì ôn lại ngay trong phiên.</p>
+    </div>
   </div>
-  <div class="card-x pad"><div id="review-stage" style="min-height:380px"></div></div>
-  <p class="small muted mt-3">Từ được thêm vào lịch ôn khi bạn bấm <b>Đánh dấu xong</b> ở phần Từ vựng, luyện thẻ, hoặc hoàn thành ngày. <button id="srs-add-all" type="button" class="btn btn-link btn-sm p-0 align-baseline">Thêm từ của mọi ngày đã hoàn thành</button>.</p>
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="panel stat-tile"><div class="stat-top"><span class="icon-tile sm sk-speaking"><i class="bi bi-alarm"></i></span></div><div><div class="stat-value" id="srs-due">0</div><div class="stat-label">Cần ôn hôm nay</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="panel stat-tile"><div class="stat-top"><span class="icon-tile sm sk-reading"><i class="bi bi-check2-all"></i></span></div><div><div class="stat-value" id="srs-done">0</div><div class="stat-label">Đã ôn phiên này</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="panel stat-tile"><div class="stat-top"><span class="icon-tile sm sk-vocab"><i class="bi bi-collection"></i></span></div><div><div class="stat-value" id="srs-total">0</div><div class="stat-label">Từ trong lịch ôn</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="panel stat-tile"><div class="stat-top"><span class="icon-tile sm sk-warmup"><i class="bi bi-award"></i></span></div><div><div class="stat-value" id="srs-mastered">0</div><div class="stat-label">Đã thuộc lâu</div></div></div></div>
+  </div>
+  <div class="panel panel-pad"><div id="review-stage" class="stage"></div></div>
+  <p class="faint mt-3" style="font-size:.86rem"><i class="bi bi-info-circle me-1"></i>Từ được thêm vào lịch ôn khi bạn đánh dấu xong phần Từ vựng, luyện thẻ, hoặc hoàn thành ngày. <button id="srs-add-all" type="button" class="btn btn-link btn-sm p-0 align-baseline fw-700">Thêm từ của mọi ngày đã hoàn thành</button></p>
 </div>
 {% endblock %}
 

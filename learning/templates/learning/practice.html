@@ -2,13 +2,18 @@
 {% block title %}Luyện từ · {{ title }} · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="crumbs mb-2"><a href="{% url 'week' day.week %}">Tuần {{ day.week }}</a> › <a href="{{ back_url }}">Ngày {{ day.number }}</a> › Luyện từ</div>
-<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-  <h1 class="h4 fw-800 mb-0">Luyện từ vựng — {{ title }}</h1>
-  <a href="{{ back_url }}" class="btn btn-ghost btn-sm ms-auto"><i class="bi bi-arrow-left"></i> Về bài học</a>
+<div class="page page-narrow">
+  <nav class="crumbs"><a href="{% url 'week' day.week %}">Tuần {{ day.week }}</a><i class="bi bi-chevron-right"></i><a href="{{ back_url }}">Ngày {{ day.number }}</a><i class="bi bi-chevron-right"></i><span>Luyện từ</span></nav>
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Luyện từ vựng · {{ vocab_json|length }} từ</div>
+      <h1>{{ day.title }}</h1>
+      <p>Gợi ý thứ tự: Thẻ từ → Chọn nghĩa → Nghe chọn từ → Nghe &amp; gõ → Điền vào câu. Đáp án gây nhiễu lấy từ cả tuần {{ day.week }}.</p>
+    </div>
+    <a href="{{ back_url }}" class="btn btn-ghost ms-auto"><i class="bi bi-arrow-left"></i> Về bài học</a>
+  </div>
+  {% include "learning/partials/_practice.html" %}
 </div>
-{% include "learning/partials/_practice.html" %}
-<p class="small muted mt-3"><i class="bi bi-lightbulb"></i> Gợi ý thứ tự: Thẻ từ → Chọn nghĩa → Nghe chọn từ → Nghe &amp; gõ → Điền vào câu. Đáp án gây nhiễu lấy từ cả tuần {{ day.week }}.</p>
 {% endblock %}
 
 {% block data %}{{ vocab_json|json_script:"vocab-data" }}{{ pool_json|json_script:"pool-data" }}{% endblock %}

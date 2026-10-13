@@ -2,51 +2,59 @@
 {% block title %}Lộ trình 12 tuần · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap align-items-end gap-3 mb-4">
-  <div>
-    <h1 class="h3 fw-800 mb-1">Lộ trình 12 tuần</h1>
-    <p class="muted mb-0">72 ngày học, mỗi ngày 90 phút, Chủ nhật nghỉ hoặc ôn nhẹ. Làm theo đúng thứ tự, không nhảy tuần.</p>
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">19/10/2026 → 09/01/2027</div>
+      <h1>Lộ trình 12 tuần</h1>
+      <p>72 ngày học, mỗi ngày 90 phút, Chủ nhật nghỉ hoặc ôn nhẹ. Làm theo đúng thứ tự, không nhảy tuần.</p>
+    </div>
+    <a href="{% url 'today' %}" class="btn btn-brand ms-auto"><i class="bi bi-play-fill"></i> Vào bài hôm nay</a>
   </div>
-  <a href="{% url 'today' %}" class="btn btn-brand ms-auto"><i class="bi bi-sun"></i> Bài hôm nay</a>
-</div>
 
-<div class="card-x pad mb-4 small">
-  <div class="row g-3">
-    <div class="col-md-4"><b><i class="bi bi-info-circle"></i> Trượt một ngày?</b><br><span class="muted">Không học bù gấp đôi. Chuyển sang ngày kế tiếp và đưa phần còn lại vào Chủ nhật.</span></div>
-    <div class="col-md-4"><b><i class="bi bi-mic"></i> Ghi âm là quan trọng nhất</b><br><span class="muted">Không ghi âm thì không biết mình có tiến bộ hay không.</span></div>
-    <div class="col-md-4"><b><i class="bi bi-clipboard-check"></i> Qua tuần mới khi…</b><br><span class="muted">tự chấm nói và nghe đạt 4/5 trở lên. Chưa đạt thì ôn thêm 2–3 ngày.</span></div>
+  <div class="panel panel-pad mb-2">
+    <div class="d-flex flex-wrap align-items-center gap-4">
+      <div class="ring" style="--size:76px;--thick:8px" data-overall-ring><span data-overall-pct>0%</span></div>
+      <div class="flex-grow-1" style="min-width:220px">
+        <div class="fw-800" style="font-size:1.1rem"><span class="tabular" data-done-count>0/72</span> ngày đã hoàn thành</div>
+        <div class="muted" style="font-size:.9rem">Qua tuần mới khi tự chấm nói và nghe đạt 4/5 trở lên. Chưa đạt thì ôn thêm 2–3 ngày.</div>
+      </div>
+      <div class="d-flex flex-column gap-2" style="font-size:.86rem">
+        <div class="d-flex gap-2 align-items-center"><i class="bi bi-arrow-repeat" style="color:var(--accent)"></i><span>Trượt một ngày? Không học bù gấp đôi.</span></div>
+        <div class="d-flex gap-2 align-items-center"><i class="bi bi-mic" style="color:var(--c-speaking)"></i><span>Ghi âm là công cụ quan trọng nhất.</span></div>
+      </div>
+    </div>
   </div>
-</div>
 
-{% for n, info, weeks in phases %}
-<section class="mb-5">
-  <div class="d-flex align-items-center gap-3 mb-3">
-    <span class="sec-num">{{ n }}</span>
-    <div><h2 class="h5 fw-800 mb-0">{{ info.name }}</h2><div class="small muted">{{ info.focus }} <b>Đích đến:</b> {{ info.target }}</div></div>
+  {% for n, info, weeks in phases %}
+  <div class="phase-band {% if forloop.first %}first{% endif %}" style="{% if forloop.first %}margin-top:36px{% endif %}">
+    <span class="num">{{ n }}</span>
+    <div><h2>{{ info.name }}</h2><p>{{ info.focus }} <b>Đích đến:</b> {{ info.target }}</p></div>
   </div>
   <div class="row g-3">
     {% for w in weeks %}
-    <div class="col-md-6 col-xl-3">
-      <div class="card-x pad h-100 d-flex flex-column">
-        <div class="d-flex align-items-center mb-1">
-          <span class="week-num">Tuần {{ w.number }}</span>
-          <span class="chip gray ms-auto tabular" data-week-done="{% for d in w.days %}{{ d.number }}{% if not forloop.last %},{% endif %}{% endfor %}">0/6</span>
+    <div class="col-md-6 col-xxl-3">
+      <div class="panel week-card {% if w.start <= today and today <= w.sunday %}current{% endif %}">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="chip brand">Tuần {{ w.number }}</span>
+          {% if w.start <= today and today <= w.sunday %}<span class="chip accent">Tuần này</span>{% endif %}
+          <span class="chip ms-auto tabular" data-week-done="{% for d in w.days %}{{ d.number }}{% if not forloop.last %},{% endif %}{% endfor %}">0/6</span>
         </div>
-        <div class="small muted mb-1">{{ w.start|date:"d/m" }} – {{ w.end|date:"d/m/Y" }}</div>
-        <a href="{% url 'week' w.number %}" class="fw-800 text-decoration-none mb-1" style="color:var(--ink)">{{ w.title }}</a>
-        <div class="small muted mb-2">{{ w.goal }}</div>
-        <div class="mt-auto">
+        <a href="{% url 'week' w.number %}" class="w-title">{{ w.title }}</a>
+        <div class="faint mt-1 mb-2" style="font-size:.78rem;font-weight:600">{{ w.start|date:"d/m" }} – {{ w.end|date:"d/m/Y" }}</div>
+        <div class="w-goal">{{ w.goal }}</div>
+        <div class="mini-days">
           {% for d in w.days %}
-          <a class="day-row py-1 {% if d.date == today %}is-today{% endif %}" href="{% url 'day' d.number %}" data-day-status="{{ d.number }}">
-            <span class="day-dot">{{ d.number }}</span><span class="small">{{ d.title }}</span>
+          <a class="{% if d.date == today %}is-today{% endif %}" href="{% url 'day' d.number %}" data-day-status="{{ d.number }}">
+            <span class="status-dot"><span>{{ d.number }}</span></span><span>{{ d.title }}</span>
           </a>
           {% endfor %}
-          <a class="day-row py-1" href="{% url 'week_review' w.number %}"><span class="day-dot"><i class="bi bi-cup-hot"></i></span><span class="small muted">Chủ nhật: ôn tập</span></a>
+          <a href="{% url 'week_review' w.number %}"><span class="status-dot" style="border-style:dashed;color:var(--accent)"><i class="bi bi-cup-hot"></i></span><span class="faint">Chủ nhật: ôn tập</span></a>
         </div>
       </div>
     </div>
     {% endfor %}
   </div>
-</section>
-{% endfor %}
+  {% endfor %}
+</div>
 {% endblock %}

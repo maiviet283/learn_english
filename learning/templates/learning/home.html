@@ -1,92 +1,173 @@
 {% extends "learning/base.html" %}
 
 {% block content %}
-<section class="hero p-4 p-md-5 mb-4">
-  <div class="position-relative" style="z-index:1">
-    {% if status == 'before' %}
-      <div class="muted-light fw-600 mb-2"><i class="bi bi-hourglass-split"></i> Lộ trình bắt đầu {{ day.weekday }}, {{ day.date|date:"d/m/Y" }} — còn {{ days_until_start }} ngày</div>
-      <h1 class="fw-800 mb-2">Sẵn sàng cho 12 tuần nói tiếng Anh tự tin</h1>
-      <p class="muted-light mb-4" style="max-width:640px">Mỗi ngày 90 phút: shadowing, từ vựng có âm thanh, nghe, nói, đọc, viết. Bạn có thể bắt đầu xem trước Ngày 1 ngay bây giờ.</p>
-      <a href="{% url 'day' 1 %}" class="btn btn-light btn-lg"><i class="bi bi-play-fill"></i> Xem Ngày 1: {{ day.title }}</a>
-    {% elif status == 'sunday' %}
-      <div class="muted-light fw-600 mb-2"><i class="bi bi-cup-hot"></i> Chủ nhật, {{ today|date:"d/m/Y" }} · Tuần {{ week.number }}</div>
-      <h1 class="fw-800 mb-2">Hôm nay nghỉ hoặc ôn nhẹ 20 phút</h1>
-      <p class="muted-light mb-4">Nghe lại bản ghi âm trong tuần, lật thẻ từ vựng, làm bài ôn tập. Không học thêm từ mới.</p>
-      <a href="{% url 'week_review' week.number %}" class="btn btn-light btn-lg"><i class="bi bi-arrow-repeat"></i> Ôn tập tuần {{ week.number }}</a>
-    {% elif status == 'after' %}
-      <div class="muted-light fw-600 mb-2"><i class="bi bi-trophy"></i> Đã qua 12 tuần</div>
-      <h1 class="fw-800 mb-2">Bạn đã đi hết lộ trình!</h1>
-      <p class="muted-light mb-4">Duy trì ít nhất 3 buổi mỗi tuần để không mất đà. Ôn từ vựng mỗi ngày và học lại những ngày còn yếu.</p>
-      <a href="{% url 'review' %}" class="btn btn-light btn-lg"><i class="bi bi-stack"></i> Ôn từ vựng</a>
-    {% else %}
-      <div class="muted-light fw-600 mb-2"><i class="bi bi-calendar-check"></i> {{ day.weekday }}, {{ today|date:"d/m/Y" }} · Tuần {{ week.number }} · Ngày {{ day.number }}/{{ total_days }}</div>
-      <h1 class="fw-800 mb-1">{{ day.title }}</h1>
-      <div class="muted-light mb-3 en-text">{{ day.title_en }}</div>
-      <p class="muted-light mb-4" style="max-width:680px">{{ day.goal }}</p>
-      <a href="{% url 'day' day.number %}" class="btn btn-light btn-lg"><i class="bi bi-play-fill"></i> Vào học hôm nay</a>
-    {% endif %}
-    <a id="continue-link" href="#" class="btn btn-outline-light btn-lg ms-sm-2 mt-2 mt-sm-0 hidden"><i class="bi bi-skip-forward"></i> Học tiếp: Ngày <span class="n"></span></a>
+<div class="page">
+
+  <div class="page-head fade-in" style="margin-bottom:22px">
+    <div>
+      <div class="eyebrow" data-greeting>Xin chào</div>
+      <h1 style="margin-bottom:0">{% if status == 'study' %}Hôm nay học gì?{% elif status == 'sunday' %}Chủ nhật thảnh thơi{% elif status == 'before' %}Sắp đến ngày khởi hành{% else %}Bạn đã về đích{% endif %}</h1>
+    </div>
+    <div class="ms-auto faint fw-600" style="font-size:.9rem"><i class="bi bi-calendar3 me-1"></i>{{ today|date:"l, d/m/Y" }}</div>
   </div>
-</section>
 
-<div id="home-stats" data-total="{{ total_days }}" class="row g-3 mb-4">
-  <div class="col-6 col-lg-3"><div class="card-x pad stat"><div class="stat-icon"><i class="bi bi-check2-circle"></i></div><div><div class="stat-value" id="stat-done">0</div><div class="stat-label">Ngày đã hoàn thành</div></div></div></div>
-  <div class="col-6 col-lg-3"><div class="card-x pad stat"><div class="stat-icon amber"><i class="bi bi-fire"></i></div><div><div class="stat-value" id="stat-streak">0</div><div class="stat-label">Ngày học liên tiếp</div></div></div></div>
-  <div class="col-6 col-lg-3"><a href="{% url 'review' %}" class="card-x pad stat card-link"><div class="stat-icon"><i class="bi bi-collection"></i></div><div><div class="stat-value" id="stat-words">0</div><div class="stat-label">Từ trong lịch ôn</div></div></a></div>
-  <div class="col-6 col-lg-3"><a href="{% url 'review' %}" class="card-x pad stat card-link"><div class="stat-icon amber"><i class="bi bi-alarm"></i></div><div><div class="stat-value" id="stat-due">0</div><div class="stat-label">Thẻ cần ôn hôm nay</div></div></a></div>
-  <div class="col-12"><div class="progress-thin"><span id="overall-progress"></span></div></div>
-</div>
+  {# ---------- Hero: bài hôm nay ---------- #}
+  <section class="hero mb-4 fade-in">
+    <div class="hero-pad d-flex flex-wrap align-items-center gap-4">
+      <div class="flex-grow-1" style="min-width:260px;max-width:680px">
+        {% if status == 'before' %}
+          <span class="chip glass"><i class="bi bi-hourglass-split"></i> Bắt đầu {{ day.weekday }}, {{ day.date|date:"d/m/Y" }} · còn {{ days_until_start }} ngày</span>
+          <h2 class="hero-title">12 tuần để nói tiếng Anh tự tin</h2>
+          <p class="hero-sub mb-4">Mỗi ngày 90 phút: shadowing, từ vựng có âm thanh, nghe, nói, đọc, viết. Bạn có thể xem trước Ngày 1 ngay bây giờ.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'day' 1 %}" class="btn btn-white btn-lg"><i class="bi bi-play-fill"></i> Xem trước Ngày 1</a>
+            <a href="{% url 'roadmap' %}" class="btn btn-glass btn-lg">Xem lộ trình</a>
+          </div>
+        {% elif status == 'sunday' %}
+          <span class="chip glass"><i class="bi bi-cup-hot"></i> Chủ nhật · Tuần {{ week.number }}</span>
+          <h2 class="hero-title">Nghỉ ngơi hoặc ôn nhẹ 20 phút</h2>
+          <p class="hero-sub mb-4">Nghe lại bản ghi âm trong tuần, lật thẻ từ vựng, làm vài câu ôn tập. Không học thêm từ mới.</p>
+          <a href="{% url 'week_review' week.number %}" class="btn btn-white btn-lg"><i class="bi bi-arrow-repeat"></i> Ôn tập tuần {{ week.number }}</a>
+        {% elif status == 'after' %}
+          <span class="chip glass"><i class="bi bi-trophy"></i> Đã qua 12 tuần</span>
+          <h2 class="hero-title">Giữ đà với 30 phút mỗi ngày</h2>
+          <p class="hero-sub mb-4">Ôn từ vựng mỗi ngày, ít nhất 3 buổi luyện mỗi tuần, và ghi âm đánh giá mỗi tháng.</p>
+          <a href="{% url 'review' %}" class="btn btn-white btn-lg"><i class="bi bi-stack"></i> Ôn từ vựng</a>
+        {% else %}
+          <div class="d-flex flex-wrap gap-2">
+            <span class="chip glass">Tuần {{ week.number }} · Ngày {{ day.number }}/{{ total_days }}</span>
+            <span class="chip glass"><i class="bi bi-clock"></i> 90 phút</span>
+          </div>
+          <h2 class="hero-title">{{ day.title }}</h2>
+          <p class="hero-sub mb-4">{{ day.goal }}</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'day' day.number %}" class="btn btn-white btn-lg"><i class="bi bi-play-fill"></i> <span data-today-cta>Bắt đầu học</span></a>
+          </div>
+        {% endif %}
+        <a id="continue-link" href="#" class="btn btn-glass mt-3 hidden"><i class="bi bi-skip-forward"></i> Học tiếp từ Ngày <span class="n"></span></a>
+      </div>
+      {% if status == 'before' %}
+      <div class="hero-side ms-auto text-center d-none d-md-block">
+        <div class="countdown"><b class="tabular">{{ days_until_start }}</b><span>ngày nữa</span></div>
+      </div>
+      {% endif %}
+      {% if status == 'study' %}
+      <div class="hero-side ms-auto">
+        <div class="ring on-dark" style="--size:132px;--thick:12px" data-today-ring data-day="{{ day.number }}" data-sections="{{ day_sections }}">
+          <div class="text-center"><div class="tabular" style="font-size:1.8rem" data-today-pct>0%</div><div style="font-size:.7rem;font-weight:700;opacity:.85">hôm nay</div></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
 
-<div class="row g-4">
-  <div class="col-lg-7">
-    <div class="card-x pad h-100">
-      <div class="d-flex align-items-center mb-1">
-        <div class="week-num">Tuần {{ week.number }} · {{ week.start|date:"d/m" }} – {{ week.end|date:"d/m" }}</div>
-        <a class="ms-auto small" href="{% url 'week' week.number %}">Chi tiết tuần <i class="bi bi-chevron-right"></i></a>
+  {# ---------- Stats ---------- #}
+  <div id="home-stats" data-total="{{ total_days }}" class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="panel stat-tile">
+        <div class="stat-top"><span class="icon-tile sm sk-quiz"><i class="bi bi-check2-circle"></i></span><div class="ring" style="--size:42px;--thick:5px" data-overall-ring><span style="font-size:.66rem" data-overall-pct>0%</span></div></div>
+        <div><div class="stat-value" id="stat-done">0/72</div><div class="stat-label">Ngày đã hoàn thành</div></div>
       </div>
-      <h2 class="h5 fw-800 mb-1">{{ week.title }}</h2>
-      <p class="muted small mb-3">{{ week.goal }}</p>
-      <div class="week-strip mb-3">
-        {% for d in week.days %}
-        <a href="{% url 'day' d.number %}" data-day-status="{{ d.number }}" class="{% if d.date == today %}is-today{% endif %}" title="{{ d.title }}"><span class="wd">{{ d.weekday|slice:"4:" }}</span>{{ d.number }}</a>
-        {% endfor %}
-        <a href="{% url 'week_review' week.number %}" class="sun" title="Chủ nhật: ôn tập"><span class="wd">CN</span><i class="bi bi-cup-hot"></i></a>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="panel stat-tile">
+        <div class="stat-top"><span class="icon-tile sm sk-writing"><i class="bi bi-fire"></i></span></div>
+        <div><div class="stat-value" id="stat-streak">0</div><div class="stat-label">Ngày học liên tiếp</div></div>
       </div>
-      {% for d in week.days %}
-      <a class="day-row {% if d.date == today %}is-today{% endif %}" href="{% url 'day' d.number %}" data-day-status="{{ d.number }}">
-        <span class="day-dot">{{ d.number }}</span>
-        <span class="date">{{ d.weekday }}<br>{{ d.date|date:"d/m" }}</span>
-        <span class="flex-grow-1"><span class="fw-600">{{ d.title }}</span><br><span class="small muted en-text">{{ d.title_en }}</span></span>
-        <i class="bi bi-chevron-right muted"></i>
+    </div>
+    <div class="col-6 col-lg-3">
+      <a href="{% url 'vocab_bank' %}" class="panel stat-tile panel-link">
+        <div class="stat-top"><span class="icon-tile sm sk-vocab"><i class="bi bi-collection"></i></span><i class="bi bi-arrow-up-right faint"></i></div>
+        <div><div class="stat-value" id="stat-words">0</div><div class="stat-label">Từ đã vào lịch ôn</div></div>
       </a>
-      {% endfor %}
+    </div>
+    <div class="col-6 col-lg-3">
+      <a href="{% url 'review' %}" class="panel stat-tile panel-link">
+        <div class="stat-top"><span class="icon-tile sm sk-speaking"><i class="bi bi-alarm"></i></span><i class="bi bi-arrow-up-right faint"></i></div>
+        <div><div class="stat-value" id="stat-due">0</div><div class="stat-label">Thẻ cần ôn hôm nay</div></div>
+      </a>
     </div>
   </div>
 
-  <div class="col-lg-5">
-    <div class="card-x pad mb-4">
-      <h2 class="h6 fw-800 mb-3"><i class="bi bi-clock-history"></i> Thời khóa biểu 90 phút mỗi ngày</h2>
-      <table class="table table-sm align-middle mb-2" style="--bs-table-bg:transparent">
-        <tbody>
-          <tr><td><span class="chip">15'</span></td><td><b>Shadowing</b><br><span class="small muted">Nghe câu ngắn, nói theo ngay, bắt chước ngữ điệu</span></td></tr>
-          <tr><td><span class="chip">20'</span></td><td><b>Từ vựng</b><br><span class="small muted">15–20 thẻ mới + ôn thẻ cũ theo lịch</span></td></tr>
-          <tr><td><span class="chip">25'</span></td><td><b>Nghe</b><br><span class="small muted">Lần đầu không nhìn lời, rồi mới đọc lời thoại</span></td></tr>
-          <tr><td><span class="chip">20'</span></td><td><b>Nói</b><br><span class="small muted">Ghi âm 1–2 phút rồi tự nghe lại</span></td></tr>
-          <tr><td><span class="chip">10'</span></td><td><b>Viết</b><br><span class="small muted">5–7 câu, email, tin nhắn, commit message</span></td></tr>
-        </tbody>
-      </table>
-      <div class="small muted">Tỷ lệ: 40% nói · 30% nghe · 20% đọc & viết · 10% từ vựng & ngữ pháp. Chủ nhật nghỉ hoặc ôn nhẹ 20 phút.</div>
+  <div class="row g-4">
+    <div class="col-xl-7">
+      {# ---------- Tuần này ---------- #}
+      <section class="panel panel-pad mb-4">
+        <div class="panel-head">
+          <span class="icon-tile sm"><i class="bi bi-calendar-week"></i></span>
+          <div><h2>Tuần {{ week.number }}: {{ week.title }}</h2><div class="sub">{{ week.start|date:"d/m" }} – {{ week.end|date:"d/m/Y" }}</div></div>
+          <a class="btn btn-quiet btn-sm ms-auto" href="{% url 'week' week.number %}">Chi tiết <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="week-strip mb-3">
+          {% for d in week.days %}
+          <a href="{% url 'day' d.number %}" data-day-status="{{ d.number }}" class="wd-cell {% if d.date == today %}is-today{% endif %}" title="{{ d.title }}">
+            <span class="wd">{{ d.weekday|slice:"4:" }}</span><span class="num"><span>{{ d.number }}</span></span>
+          </a>
+          {% endfor %}
+          <a href="{% url 'week_review' week.number %}" class="wd-cell sun" title="Chủ nhật: ôn tập"><span class="wd">CN</span><span class="num"><i class="bi bi-cup-hot"></i></span></a>
+        </div>
+        <div class="day-list">
+          {% for d in week.days %}
+          <a class="day-row {% if d.date == today %}is-today{% endif %}" href="{% url 'day' d.number %}" data-day-status="{{ d.number }}">
+            <span class="status-dot"><span>{{ d.number }}</span></span>
+            <span class="flex-grow-1" style="min-width:0"><span class="t d-block">{{ d.title }}</span><span class="s">{{ d.weekday }} · {{ d.date|date:"d/m" }} · {{ d.title_en }}</span></span>
+            <i class="bi bi-chevron-right go"></i>
+          </a>
+          {% endfor %}
+        </div>
+      </section>
+
+      {# ---------- Lịch học ---------- #}
+      <section class="panel panel-pad">
+        <div class="panel-head">
+          <span class="icon-tile sm sk-listening"><i class="bi bi-grid-3x3-gap"></i></span>
+          <div><h2>Lịch học 12 tuần</h2><div class="sub">Mỗi ô là một ngày, mỗi cột là một tuần</div></div>
+        </div>
+        <div class="heatmap-wrap">
+          <div class="heatmap-days"><span>T2</span><span></span><span>T4</span><span></span><span>T6</span><span></span><span>CN</span></div>
+          <div class="heatmap" data-heatmap data-today="{{ today|date:'Y-m-d' }}">
+            {% for w in calendar %}{% for c in w %}<span data-date="{{ c.date|date:'Y-m-d' }}"{% if c.day %} data-day="{{ c.day }}" title="Ngày {{ c.day }} · {{ c.date|date:'d/m' }}"{% else %} class="sun" title="Chủ nhật {{ c.date|date:'d/m' }}"{% endif %}></span>{% endfor %}{% endfor %}
+          </div>
+        </div>
+        <div class="legend mt-3">
+          <i></i> Chưa học <i style="background:color-mix(in srgb,var(--brand) 38%,var(--surface))"></i> Có luyện tập <i style="background:var(--brand)"></i> Hoàn thành ngày <i style="background:transparent;box-shadow:0 0 0 2px var(--accent)"></i> Hôm nay
+        </div>
+      </section>
     </div>
 
-    <div class="card-x pad">
-      <h2 class="h6 fw-800 mb-3"><i class="bi bi-signpost-split"></i> Ba chặng của lộ trình</h2>
-      {% for n, p in phases.items %}
-      <div class="d-flex gap-3 mb-3">
-        <span class="stat-icon {% if n == week.phase %}amber{% endif %}" style="width:36px;height:36px;font-size:1rem">{{ n }}</span>
-        <div><div class="fw-700">{{ p.name }}</div><div class="small muted">{{ p.focus }}</div><div class="small"><i class="bi bi-bullseye"></i> {{ p.target }}</div></div>
-      </div>
-      {% endfor %}
-      <a href="{% url 'roadmap' %}" class="btn btn-soft btn-sm">Xem toàn bộ lộ trình</a>
+    <div class="col-xl-5">
+      {# ---------- 90 phút mỗi ngày ---------- #}
+      <section class="panel panel-pad mb-4">
+        <div class="panel-head">
+          <span class="icon-tile sm sk-lesson"><i class="bi bi-clock-history"></i></span>
+          <div><h2>90 phút mỗi ngày</h2><div class="sub">40% nói · 30% nghe · 20% đọc & viết · 10% từ vựng</div></div>
+        </div>
+        <div class="routine-bar mb-3">
+          {% for key, name, desc, mins in routine %}<span class="sk-{{ key }}" style="width:{% widthratio mins 90 100 %}%"></span>{% endfor %}
+        </div>
+        {% for key, name, desc, mins in routine %}
+        <div class="routine-row sk-{{ key }}">
+          <span class="dot"></span>
+          <div><div class="t">{{ name }}</div><div class="s">{{ desc }}</div></div>
+          <span class="min">{{ mins }}'</span>
+        </div>
+        {% endfor %}
+      </section>
+
+      {# ---------- 3 chặng ---------- #}
+      <section class="panel panel-pad">
+        <div class="panel-head">
+          <span class="icon-tile sm sk-warmup"><i class="bi bi-flag"></i></span>
+          <div><h2>Ba chặng của lộ trình</h2><div class="sub">Mỗi chặng 4 tuần</div></div>
+        </div>
+        {% for n, p in phases.items %}
+        <div class="phase-step {% if n == week.phase and status != 'before' %}current{% elif n < week.phase %}past{% endif %}">
+          <span class="node">{% if n < week.phase %}<i class="bi bi-check-lg"></i>{% else %}{{ n }}{% endif %}</span>
+          <div><div class="t">{{ p.name }}</div><div class="s">{{ p.focus }}</div><div class="s mt-1"><i class="bi bi-bullseye me-1" style="color:var(--accent)"></i>{{ p.target }}</div></div>
+        </div>
+        {% endfor %}
+        <a href="{% url 'roadmap' %}" class="btn btn-soft btn-sm mt-4">Xem toàn bộ lộ trình <i class="bi bi-arrow-right"></i></a>
+      </section>
     </div>
   </div>
 </div>

@@ -1,11 +1,17 @@
 {% extends "learning/base.html" %}
-{% block title %}403 – Yêu cầu không hợp lệ{% endblock %}
+{% block title %}403 – Không có quyền truy cập{% endblock %}
 
 {% block content %}
-<div class="text-center py-5">
-  <div style="font-size:4rem">🧭</div>
-  <h1 class="fw-800 mt-3">403</h1>
-  <p class="fs-5 muted mb-4">Có lỗi với yêu cầu này.</p>
-  <a href="{% url 'today' %}" class="btn btn-brand btn-lg"><i class="bi bi-sun me-1"></i>Về bài hôm nay</a>
+<div class="page">
+  <div class="error-page">
+    <div class="emoji">🔒</div>
+    <div class="code">403</div>
+    <h1>Không có quyền truy cập</h1>
+    <p>Trang này không mở được. Thử tải lại trang hoặc quay về bài hôm nay.</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      <a href="{% url 'today' %}" class="btn btn-brand btn-lg"><i class="bi bi-play-fill"></i> Bài hôm nay</a>
+      <a href="{% url 'roadmap' %}" class="btn btn-ghost btn-lg">Xem lộ trình</a>
+    </div>
+  </div>
 </div>
 {% endblock %}

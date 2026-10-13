@@ -11,9 +11,10 @@
 <meta property="og:title" content="{% block og_title %}{{ SITE_NAME }} — Lộ trình tiếng Anh giao tiếp 12 tuần{% endblock %}">
 <meta property="og:url" content="{{ SITE_URL }}{{ request.path }}">
 <meta property="og:locale" content="vi_VN">
-<meta name="theme-color" content="#0f766e">
+<meta name="theme-color" content="#5b4cf0">
 <link rel="icon" type="image/svg+xml" href="{% static 'learning/favicon.svg' %}">
 <link rel="icon" type="image/png" href="{% static 'learning/favicon.png' %}">
+<link rel="apple-touch-icon" href="{% static 'learning/favicon.png' %}">
 <script>
   /* Áp dụng giao diện sáng/tối trước khi vẽ trang để không bị nháy */
   (function () {
@@ -27,50 +28,66 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="{% static 'learning/css/app.css' %}?v={{ ASSET_VERSION }}" rel="stylesheet">
 {% block extra_head %}{% endblock %}
 </head>
 <body>
-{% with url_name=request.resolver_match.url_name %}
-<header class="topnav">
-  <div class="container h-100 d-flex align-items-center gap-3">
-    <a class="brand" href="{% url 'home' %}"><span class="brand-mark">ED</span><span>English Daily <small>12 tuần</small></span></a>
-    <nav class="d-none d-lg-flex gap-1 ms-3" aria-label="Menu chính">
-      <a class="nav-link {% if url_name == 'day' or url_name == 'today' or url_name == 'day_practice' %}active{% endif %}" href="{% url 'today' %}"><i class="bi bi-sun me-1"></i>Hôm nay</a>
-      <a class="nav-link {% if url_name == 'roadmap' or url_name == 'week' or url_name == 'week_review' %}active{% endif %}" href="{% url 'roadmap' %}"><i class="bi bi-signpost-split me-1"></i>Lộ trình</a>
-      <a class="nav-link {% if url_name == 'review' %}active{% endif %}" href="{% url 'review' %}"><i class="bi bi-stack me-1"></i>Ôn từ<span class="nav-badge srs-due-badge"></span></a>
-      <a class="nav-link {% if url_name == 'vocab_bank' %}active{% endif %}" href="{% url 'vocab_bank' %}"><i class="bi bi-journal-text me-1"></i>Từ vựng</a>
-      <a class="nav-link {% if url_name == 'phrases' %}active{% endif %}" href="{% url 'phrases' %}"><i class="bi bi-chat-quote me-1"></i>Mẫu câu</a>
-      <a class="nav-link {% if url_name == 'recordings' %}active{% endif %}" href="{% url 'recordings' %}"><i class="bi bi-mic me-1"></i>Ghi âm</a>
-    </nav>
-    <div class="ms-auto d-flex gap-2">
-      <button id="theme-toggle" class="icon-btn" type="button" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối"><i class="bi bi-moon-stars"></i></button>
-      <a href="{% url 'settings' %}" class="icon-btn {% if url_name == 'settings' %}border-success{% endif %}" title="Cài đặt" aria-label="Cài đặt"><i class="bi bi-gear"></i></a>
+{% with u=request.resolver_match.url_name %}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo-glyph" viewBox="0 0 24 24"><path d="M5 5.5h8.5M5 12h7M5 18.5h8.5M5 5.5v13" stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M17 9v6M20 7v10" stroke="#ffd36e" stroke-width="2.4" stroke-linecap="round"/></symbol>
+</svg>
+
+<aside class="sidebar" aria-label="Điều hướng chính">
+  <a class="logo" href="{% url 'home' %}"><span class="logo-mark"><svg><use href="#logo-glyph"/></svg></span><span><b>English Daily</b><small>Lộ trình 12 tuần</small></span></a>
+  <nav class="side-nav">
+    <a class="nav-item {% if u == 'home' %}active{% endif %}" href="{% url 'home' %}"><i class="bi bi-house"></i><span>Tổng quan</span></a>
+    <a class="nav-item {% if u == 'day' or u == 'today' or u == 'day_practice' %}active{% endif %}" href="{% url 'today' %}"><i class="bi bi-sun"></i><span>Bài hôm nay</span></a>
+    <a class="nav-item {% if u == 'roadmap' or u == 'week' or u == 'week_review' %}active{% endif %}" href="{% url 'roadmap' %}"><i class="bi bi-signpost-split"></i><span>Lộ trình</span></a>
+    <div class="nav-label">Luyện tập</div>
+    <a class="nav-item {% if u == 'review' %}active{% endif %}" href="{% url 'review' %}"><i class="bi bi-stack"></i><span>Ôn từ vựng</span><span class="nav-badge srs-due-badge"></span></a>
+    <a class="nav-item {% if u == 'vocab_bank' %}active{% endif %}" href="{% url 'vocab_bank' %}"><i class="bi bi-journal-text"></i><span>Kho từ vựng</span></a>
+    <a class="nav-item {% if u == 'phrases' %}active{% endif %}" href="{% url 'phrases' %}"><i class="bi bi-chat-square-quote"></i><span>Mẫu câu</span></a>
+    <a class="nav-item {% if u == 'recordings' %}active{% endif %}" href="{% url 'recordings' %}"><i class="bi bi-mic"></i><span>Bản ghi âm</span></a>
+  </nav>
+  <div class="side-foot">
+    <div class="streak-card">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="flame">🔥</span>
+        <div><div class="big tabular" data-streak>0</div><div class="faint" style="font-size:.74rem;font-weight:600">ngày học liên tiếp</div></div>
+      </div>
+      <div class="d-flex justify-content-between faint mb-1" style="font-size:.74rem;font-weight:600"><span>Tiến độ lộ trình</span><span class="tabular" data-done-count>0/72</span></div>
+      <div class="bar thin"><span data-overall-bar></span></div>
     </div>
+    <a class="nav-item {% if u == 'settings' %}active{% endif %}" href="{% url 'settings' %}"><i class="bi bi-gear"></i><span>Cài đặt</span></a>
+    <button class="nav-item" type="button" data-theme-toggle><i class="bi bi-moon-stars"></i><span>Đổi giao diện</span></button>
   </div>
+</aside>
+
+<header class="topbar">
+  <a class="logo" href="{% url 'home' %}"><span class="logo-mark"><svg><use href="#logo-glyph"/></svg></span><span><b>English Daily</b></span></a>
+  <span class="streak-chip ms-auto" title="Ngày học liên tiếp">🔥 <span data-streak>0</span></span>
+  <button class="icon-btn" type="button" data-theme-toggle aria-label="Đổi giao diện sáng/tối"><i class="bi bi-moon-stars"></i></button>
+  <a class="icon-btn" href="{% url 'settings' %}" aria-label="Cài đặt"><i class="bi bi-gear"></i></a>
 </header>
 
-<main class="container py-4">
+<main class="main">
 {% block content %}{% endblock %}
+<div class="footer-note">{{ SITE_NAME }} · Học đều 90 phút mỗi ngày hiệu quả hơn học dồn 6 tiếng cuối tuần. Đừng sợ sai — cứ nói tiếp.</div>
 </main>
 
-<footer class="footer container pb-4 pt-2 text-center">
-  {{ SITE_NAME }} · Học đều 90 phút mỗi ngày hiệu quả hơn học dồn 6 tiếng cuối tuần. Đừng sợ sai — cứ nói tiếp.
-</footer>
-
-<nav class="bottomnav" aria-label="Menu nhanh">
-  <a href="{% url 'today' %}" class="{% if url_name == 'day' or url_name == 'today' or url_name == 'day_practice' or url_name == 'home' %}active{% endif %}"><i class="bi bi-sun"></i>Hôm nay</a>
-  <a href="{% url 'roadmap' %}" class="{% if url_name == 'roadmap' or url_name == 'week' or url_name == 'week_review' %}active{% endif %}"><i class="bi bi-signpost-split"></i>Lộ trình</a>
-  <a href="{% url 'review' %}" class="{% if url_name == 'review' %}active{% endif %}"><i class="bi bi-stack"></i>Ôn từ<span class="nav-badge srs-due-badge"></span></a>
-  <a href="{% url 'vocab_bank' %}" class="{% if url_name == 'vocab_bank' or url_name == 'phrases' %}active{% endif %}"><i class="bi bi-journal-text"></i>Từ vựng</a>
-  <a href="{% url 'recordings' %}" class="{% if url_name == 'recordings' %}active{% endif %}"><i class="bi bi-mic"></i>Ghi âm</a>
+<nav class="tabbar" aria-label="Menu nhanh">
+  <a href="{% url 'home' %}" class="{% if u == 'home' %}active{% endif %}"><i class="bi bi-house"></i>Tổng quan</a>
+  <a href="{% url 'today' %}" class="{% if u == 'day' or u == 'today' or u == 'day_practice' %}active{% endif %}"><i class="bi bi-sun"></i>Hôm nay</a>
+  <a href="{% url 'roadmap' %}" class="{% if u == 'roadmap' or u == 'week' or u == 'week_review' %}active{% endif %}"><i class="bi bi-signpost-split"></i>Lộ trình</a>
+  <a href="{% url 'review' %}" class="{% if u == 'review' or u == 'vocab_bank' or u == 'phrases' %}active{% endif %}"><i class="bi bi-stack"></i>Ôn từ<span class="nav-badge srs-due-badge"></span></a>
+  <a href="{% url 'recordings' %}" class="{% if u == 'recordings' %}active{% endif %}"><i class="bi bi-mic"></i>Ghi âm</a>
 </nav>
 {% endwith %}
 
-<div id="now-playing" class="now-playing" role="status"><i class="bi bi-soundwave"></i><span class="txt"></span><button type="button">Dừng <span class="d-none d-sm-inline">(Esc)</span></button></div>
+<div id="now-playing" class="now-playing" role="status"><span class="eq"><i></i><i></i><i></i></span><span class="txt"></span><button type="button">Dừng</button></div>
 
 {% block data %}{% endblock %}
 <script src="{% static 'learning/js/app.js' %}?v={{ ASSET_VERSION }}"></script>

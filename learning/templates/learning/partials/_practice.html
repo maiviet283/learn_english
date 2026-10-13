@@ -1,11 +1,14 @@
-<div id="practice" class="card-x pad"{% if day %} data-day="{{ day.number }}"{% endif %}>
-  <div class="mode-tabs d-flex flex-wrap gap-2 mb-3">
-    <button type="button" class="btn btn-ghost btn-sm" data-mode="cards"><i class="bi bi-card-heading"></i> Thẻ từ</button>
-    <button type="button" class="btn btn-ghost btn-sm" data-mode="meaning"><i class="bi bi-translate"></i> Chọn nghĩa</button>
-    <button type="button" class="btn btn-ghost btn-sm" data-mode="listen"><i class="bi bi-ear"></i> Nghe chọn từ</button>
-    <button type="button" class="btn btn-ghost btn-sm" data-mode="type"><i class="bi bi-keyboard"></i> Nghe &amp; gõ</button>
-    <button type="button" class="btn btn-ghost btn-sm" data-mode="gap"><i class="bi bi-input-cursor-text"></i> Điền vào câu</button>
-    <span class="ms-auto d-flex gap-2 align-items-center small muted"><span id="practice-score" class="fw-700" style="color:var(--ok)"></span><span id="practice-progress" class="chip gray tabular"></span></span>
+<div id="practice" class="panel panel-pad"{% if day %} data-day="{{ day.number }}"{% endif %}>
+  <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+    <div class="seg mode-tabs" data-value="cards">
+      <button type="button" data-mode="cards" data-v="cards"><i class="bi bi-card-heading me-1"></i>Thẻ từ</button>
+      <button type="button" data-mode="meaning" data-v="meaning"><i class="bi bi-translate me-1"></i>Chọn nghĩa</button>
+      <button type="button" data-mode="listen" data-v="listen"><i class="bi bi-ear me-1"></i>Nghe chọn từ</button>
+      <button type="button" data-mode="type" data-v="type"><i class="bi bi-keyboard me-1"></i>Nghe &amp; gõ</button>
+      <button type="button" data-mode="gap" data-v="gap"><i class="bi bi-input-cursor-text me-1"></i>Điền vào câu</button>
+    </div>
+    <span class="ms-auto d-flex gap-2 align-items-center"><span id="practice-score" class="chip ok"></span><span id="practice-progress" class="chip tabular"></span></span>
   </div>
-  <div id="practice-stage" style="min-height:360px"></div>
+  <div class="bar thin mb-4"><span id="practice-bar"></span></div>
+  <div id="practice-stage" class="stage"></div>
 </div>

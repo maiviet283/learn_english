@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
@@ -13,6 +15,25 @@ def _vocab_json(words):
              'ex': w['ex'], 'ex_vi': w['ex_vi'], 'day': w.get('day')} for w in words]
 
 
+ROUTINE = [
+    ('warmup', 'Shadowing', 'Nghe câu ngắn, nói theo ngay', 15),
+    ('vocab', 'Từ vựng', 'Thẻ mới + ôn thẻ cũ', 20),
+    ('listening', 'Nghe', 'Lần đầu không nhìn lời', 25),
+    ('speaking', 'Nói', 'Ghi âm rồi tự nghe lại', 20),
+    ('writing', 'Viết', 'Email, tin nhắn, PR…', 10),
+]
+
+
+def _calendar():
+    """Lưới 12 tuần × 7 ngày cho heatmap ở trang chủ."""
+    days = {d['date']: d['number'] for d in content.all_days()}
+    return [
+        [{'date': w['start'] + timedelta(days=i), 'day': days.get(w['start'] + timedelta(days=i))}
+         for i in range(7)]
+        for w in content.all_weeks()
+    ]
+
+
 def home(request):
     today = timezone.localdate()
     day, status = content.scheduled_day(today)
@@ -24,8 +45,10 @@ def home(request):
         'day': day,
         'status': status,
         'week': week,
-        'weeks': content.all_weeks(),
         'phases': content.PHASES,
+        'routine': ROUTINE,
+        'calendar': _calendar(),
+        'day_sections': len(_day_sections(day)),
     })
 
 
@@ -66,6 +89,25 @@ def week_review(request, number):
     })
 
 
+SECTION_META = [
+    ('warmup', 'Khởi động', 'bi-soundwave', 15),
+    ('vocab', 'Từ vựng', 'bi-card-text', 20),
+    ('lesson', 'Kiến thức', 'bi-lightbulb', None),
+    ('listening', 'Nghe', 'bi-headphones', 25),
+    ('speaking', 'Nói', 'bi-mic', 20),
+    ('reading', 'Đọc', 'bi-book', None),
+    ('writing', 'Viết', 'bi-pencil', 10),
+    ('quiz', 'Bài tập', 'bi-ui-checks', None),
+]
+
+
+def _day_sections(day):
+    present = {'warmup': day['warmup'], 'vocab': True, 'lesson': True, 'listening': day['listening'],
+               'speaking': day['speaking'], 'reading': day['reading'], 'writing': day['writing'],
+               'quiz': day['quiz']}
+    return [{'key': k, 'name': n, 'icon': i, 'mins': m} for k, n, i, m in SECTION_META if present[k]]
+
+
 def day_detail(request, number):
     day = content.get_day(number)
     if not day:
@@ -78,6 +120,7 @@ def day_detail(request, number):
         'total_days': content.total_days(),
         'vocab_json': _vocab_json([dict(w, day=number) for w in day['vocab']]),
         'key_prefix': f'day-{number}',
+        'sections': _day_sections(day),
         'today': timezone.localdate(),
     })
 
@@ -127,8 +170,13 @@ def recordings(request):
 
 
 def settings_page(request):
+    voices = []
+    for key, (voice_id, label) in tts.VOICES.items():
+        name, _, desc = label.partition(' — ')
+        voices.append({'key': key, 'name': name, 'desc': desc,
+                       'flag': 'UK' if voice_id.startswith('en-GB') else 'US'})
     return render(request, 'learning/settings.html', {
-        'voices': tts.VOICES,
+        'voices': voices,
         'speeds': tts.SPEEDS,
     })
 

@@ -5,20 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>500 – Lỗi hệ thống</title>
 <style>
-body { font-family: system-ui, sans-serif; background: #f7f6f3; color: #1e293b; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-.box { text-align: center; padding: 2rem; }
-.icon { font-size: 5rem; }
-h1 { color: #0f766e; font-weight: 800; margin: .5rem 0; }
-p { color: #64748b; font-size: 1.1rem; }
-a { display: inline-block; margin-top: 1rem; background: #0f766e; color: #fff; padding: .6rem 1.5rem; border-radius: .5rem; text-decoration: none; font-weight: 600; }
-a:hover { background: #115e59; }
+:root { --bg:#f6f6fb; --ink:#14132b; --ink2:#5d5c78; --brand:#5b4cf0; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0e0d1a; --ink:#f1f0fb; --ink2:#a5a3c2; --brand:#8b80ff; } }
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 16px; box-sizing: border-box; }
+.box { text-align: center; max-width: 440px; }
+.icon { font-size: 4rem; }
+.code { font-size: 4.5rem; font-weight: 800; letter-spacing: -.05em; line-height: 1; background: linear-gradient(135deg,#5b4cf0,#b84fd6); -webkit-background-clip: text; background-clip: text; color: transparent; margin-top: 8px; }
+h1 { font-size: 1.4rem; margin: 10px 0 6px; }
+p { color: var(--ink2); line-height: 1.6; }
+a { display: inline-block; margin-top: 12px; background: var(--brand); color: #fff; padding: 12px 22px; border-radius: 14px; text-decoration: none; font-weight: 700; }
 </style>
 </head>
 <body>
 <div class="box">
   <div class="icon">⚙️</div>
-  <h1>500</h1>
-  <p>Đã xảy ra lỗi từ phía máy chủ. Vui lòng thử lại sau ít phút.</p>
+  <div class="code">500</div>
+  <h1>Máy chủ đang gặp sự cố</h1>
+  <p>Đã xảy ra lỗi từ phía máy chủ. Vui lòng tải lại sau ít phút — tiến độ học của bạn vẫn an toàn trong trình duyệt.</p>
   <a href="/">Về trang chủ</a>
 </div>
 </body>

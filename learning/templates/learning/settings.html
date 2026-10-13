@@ -2,61 +2,85 @@
 {% block title %}Cài đặt · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div id="settings">
-  <h1 class="h3 fw-800 mb-3">Cài đặt</h1>
-  <div class="row g-4">
-    <div class="col-lg-7">
-      <div class="card-x pad mb-4">
-        <h2 class="h6 fw-800 mb-3"><i class="bi bi-person-voice"></i> Giọng đọc</h2>
-        <label class="form-label small fw-600" for="set-voice">Giọng mặc định (từ vựng, câu ví dụ, bài đọc)</label>
-        <div class="d-flex gap-2 mb-3">
-          <select id="set-voice" class="form-select" data-setting="voice">{% for k, v in voices.items %}<option value="{{ k }}">{{ v.1 }}</option>{% endfor %}</select>
-          <button class="btn btn-soft text-nowrap" type="button" data-test-voice><i class="bi bi-play-fill"></i> Thử</button>
-        </div>
-        <div class="row g-3">
-          <div class="col-sm-6">
-            <label class="form-label small fw-600" for="set-speed">Tốc độ khi bấm nghe</label>
-            <select id="set-speed" class="form-select" data-setting="speed">{% for k, v in speeds.items %}<option value="{{ k }}">{{ v.1 }}</option>{% endfor %}</select>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label small fw-600" for="set-shadow">Tốc độ mặc định khi shadowing</label>
-            <select id="set-shadow" class="form-select" data-setting="shadowSpeed">{% for k, v in speeds.items %}<option value="{{ k }}">{{ v.1 }}</option>{% endfor %}</select>
-          </div>
-        </div>
-        <div class="form-check form-switch mt-3">
-          <input class="form-check-input" type="checkbox" id="autoplay" data-setting="autoplay">
-          <label class="form-check-label" for="autoplay">Tự đọc từ khi lật thẻ / ôn tập</label>
-        </div>
-        <p class="small muted mt-3 mb-0">Âm thanh dùng giọng đọc neural của Microsoft, được tạo khi bạn bấm nghe lần đầu (có thể chờ 1–2 giây) rồi lưu lại. Nếu máy chủ không tạo được, trang tự chuyển sang giọng đọc có sẵn của trình duyệt.</p>
-      </div>
+<div class="page page-narrow" id="settings">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Tùy chỉnh</div>
+      <h1>Cài đặt</h1>
+      <p>Mọi thiết lập được lưu ngay trong trình duyệt, không cần bấm lưu.</p>
+    </div>
+  </div>
 
-      <div class="card-x pad mb-4">
-        <h2 class="h6 fw-800 mb-3"><i class="bi bi-circle-half"></i> Giao diện</h2>
-        <select class="form-select" data-setting="theme" style="max-width:260px" aria-label="Giao diện">
-          <option value="auto">Theo hệ thống</option><option value="light">Sáng</option><option value="dark">Tối</option>
-        </select>
+  <div class="set-group">
+    <h2>Giọng đọc mặc định</h2>
+    <div class="panel">
+      <div class="voice-grid" role="radiogroup" aria-label="Giọng đọc">
+        {% for v in voices %}
+        <label class="voice-card">
+          <input type="radio" name="voice" value="{{ v.key }}" data-setting="voice">
+          <span class="flag">{{ v.flag }}</span>
+          <span><span class="n d-block">{{ v.name }}</span><span class="d d-block">{{ v.desc }}</span></span>
+          <button type="button" class="say-btn sm" data-test-voice="{{ v.key }}" aria-label="Nghe thử giọng {{ v.name }}"><i class="bi bi-play-fill"></i></button>
+        </label>
+        {% endfor %}
       </div>
+      <p class="faint mb-0" style="font-size:.82rem;padding:0 20px 18px">Giọng đọc neural của Microsoft, tạo khi bạn bấm nghe lần đầu (chờ 1–2 giây) rồi lưu lại. Nếu máy chủ không tạo được, trang tự chuyển sang giọng có sẵn của trình duyệt.</p>
+    </div>
+  </div>
 
-      <div class="card-x pad mb-4">
-        <h2 class="h6 fw-800 mb-2"><i class="bi bi-cloud-arrow-down"></i> Sao lưu tiến độ</h2>
-        <p class="small muted">Tiến độ, điểm, bài viết và lịch ôn từ được lưu trong trình duyệt này. Muốn học trên máy khác, hãy xuất file rồi nhập vào máy kia. (Bản ghi âm tải riêng ở trang Ghi âm.)</p>
-        <div class="d-flex flex-wrap gap-2">
-          <button id="export-btn" class="btn btn-brand btn-sm" type="button"><i class="bi bi-download"></i> Xuất file sao lưu</button>
-          <label class="btn btn-ghost btn-sm mb-0"><i class="bi bi-upload"></i> Nhập file sao lưu<input id="import-file" type="file" accept="application/json" hidden></label>
-          <button id="reset-btn" class="btn btn-ghost btn-sm text-danger ms-auto" type="button"><i class="bi bi-trash"></i> Xóa toàn bộ tiến độ</button>
-        </div>
+  <div class="set-group">
+    <h2>Âm thanh</h2>
+    <div class="panel">
+      <div class="set-row">
+        <div><div class="t">Tốc độ khi bấm nghe</div><div class="s">Từ vựng, câu ví dụ, bài đọc</div></div>
+        <div class="ctl seg" data-setting="speed">{% for k, v in speeds.items %}<button type="button" data-v="{{ k }}">{% if k == 'fast' %}Nhanh{% elif k == 'normal' %}Thường{% else %}{{ v.1 }}{% endif %}</button>{% endfor %}</div>
+      </div>
+      <div class="set-row">
+        <div><div class="t">Tốc độ mặc định khi shadowing</div><div class="s">Bắt đầu chậm, tăng dần khi đã quen</div></div>
+        <div class="ctl seg" data-setting="shadowSpeed">{% for k, v in speeds.items %}<button type="button" data-v="{{ k }}">{% if k == 'fast' %}Nhanh{% elif k == 'normal' %}Thường{% else %}{{ v.1 }}{% endif %}</button>{% endfor %}</div>
+      </div>
+      <div class="set-row">
+        <div><div class="t">Tự đọc từ khi lật thẻ</div><div class="s">Áp dụng cho luyện thẻ và ôn tập</div></div>
+        <div class="ctl form-check form-switch mb-0"><input class="form-check-input" type="checkbox" role="switch" id="autoplay" data-setting="autoplay" aria-label="Tự đọc từ khi lật thẻ"></div>
       </div>
     </div>
+  </div>
 
-    <div class="col-lg-5">
-      <div class="card-x pad">
-        <h2 class="h6 fw-800 mb-2"><i class="bi bi-megaphone"></i> Nghe câu bất kỳ</h2>
-        <p class="small muted">Dán một câu hoặc đoạn tiếng Anh (email, tài liệu, câu bạn tự viết…) để nghe cách đọc.</p>
-        <textarea id="free-text" class="form-control en-text mb-2" rows="5" placeholder="Could you clarify why we need a second database?"></textarea>
-        <div class="d-flex gap-2">
-          <select id="free-speed" class="form-select form-select-sm" style="max-width:180px" aria-label="Tốc độ">{% for k, v in speeds.items %}<option value="{{ k }}" {% if k == 'slow' %}selected{% endif %}>{{ v.1 }}</option>{% endfor %}</select>
-          <button id="free-say" class="btn btn-brand btn-sm" type="button"><i class="bi bi-volume-up"></i> Nghe</button>
+  <div class="set-group">
+    <h2>Giao diện</h2>
+    <div class="panel">
+      <div class="set-row">
+        <div><div class="t">Chế độ màu</div><div class="s">Tối dễ chịu hơn khi học buổi tối</div></div>
+        <div class="ctl seg" data-setting="theme"><button type="button" data-v="auto"><i class="bi bi-circle-half me-1"></i>Tự động</button><button type="button" data-v="light"><i class="bi bi-sun me-1"></i>Sáng</button><button type="button" data-v="dark"><i class="bi bi-moon-stars me-1"></i>Tối</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="set-group">
+    <h2>Nghe câu bất kỳ</h2>
+    <div class="panel panel-pad">
+      <p class="muted" style="font-size:.9rem">Dán một câu hoặc đoạn tiếng Anh (email, tài liệu, câu bạn tự viết…) để nghe cách đọc.</p>
+      <textarea id="free-text" class="form-control en-text mb-3" rows="4" placeholder="Could you clarify why we need a second database?"></textarea>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <div class="seg" id="free-speed" data-value="slow">{% for k, v in speeds.items %}<button type="button" data-v="{{ k }}">{% if k == 'fast' %}Nhanh{% elif k == 'normal' %}Thường{% else %}{{ v.1 }}{% endif %}</button>{% endfor %}</div>
+        <button id="free-say" class="play-main ms-auto" type="button"><i class="bi bi-volume-up-fill"></i><span>Nghe</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="set-group">
+    <h2>Sao lưu tiến độ</h2>
+    <div class="panel">
+      <div class="set-row">
+        <div style="max-width:440px"><div class="t">Xuất / nhập file</div><div class="s">Tiến độ, điểm, bài viết và lịch ôn từ nằm trong trình duyệt này. Muốn học trên máy khác, hãy xuất file rồi nhập vào máy kia. Bản ghi âm tải riêng ở trang Ghi âm.</div></div>
+        <div class="ctl d-flex flex-wrap gap-2">
+          <button id="export-btn" class="btn btn-brand btn-sm" type="button"><i class="bi bi-download"></i> Xuất file</button>
+          <label class="btn btn-ghost btn-sm mb-0"><i class="bi bi-upload"></i> Nhập file<input id="import-file" type="file" accept="application/json" hidden></label>
         </div>
+      </div>
+      <div class="set-row">
+        <div><div class="t" style="color:var(--bad)">Xóa toàn bộ tiến độ</div><div class="s">Không thể hoàn tác. Hãy xuất file sao lưu trước.</div></div>
+        <button id="reset-btn" class="ctl btn btn-danger-quiet btn-sm" type="button"><i class="bi bi-trash"></i> Xóa</button>
       </div>
     </div>
   </div>
