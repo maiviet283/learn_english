@@ -26,9 +26,16 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-key-english-daily-not-for-se
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com,english.vietdon.vn')
+# Các host luôn được phép (kể cả khi biến môi trường ALLOWED_HOSTS điền thiếu), cộng thêm host trong
+# ALLOWED_HOSTS và tên miền Render tự cấp qua RENDER_EXTERNAL_HOSTNAME.
+_BASE_HOSTS = ['localhost', '127.0.0.1', '.onrender.com', 'english.vietdon.vn']
+ALLOWED_HOSTS = list(dict.fromkeys(
+    _BASE_HOSTS + env_list('ALLOWED_HOSTS', '') + env_list('RENDER_EXTERNAL_HOSTNAME', '')
+))
 
-CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', 'https://english.vietdon.vn')
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(
+    ['https://english.vietdon.vn', 'https://*.onrender.com'] + env_list('CSRF_TRUSTED_ORIGINS', '')
+))
 
 
 INSTALLED_APPS = [
